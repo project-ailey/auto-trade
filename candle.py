@@ -11,6 +11,14 @@ class Candle:
         self.volume = volume
         self.indicators = {}  # Dictionary to store indicator values
 
+    def __repr__(self):
+        d = self.timestamp.strftime("%y-%m-%d %H:%M")
+        return f"date={d}, o={self.open}, c={self.close}, l={self.low}, h={self.high}, v={self.volume}, inds={self.indicators}"
+
+    def __str__(self):
+        d = self.timestamp.strftime("%y-%m-%d %H:%M")
+        return f"date={d}, o={self.open}, c={self.close}, l={self.low}, h={self.high}, v={self.volume}, inds={self.indicators}"
+
     # Set indicator value
     def set_indicator(self, name: str, value: float):
         self.indicators[name] = value

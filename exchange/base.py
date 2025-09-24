@@ -4,6 +4,9 @@ import random
 
 class BaseExchange:
 
+    def get_market_time(self):
+        return (0, 0, 0, 0, 0, 0)   # market_start_hour / minute, regular_market_start_hour / minute, regular_market_end_hour / minute
+
     # Fetch candle data and return as a standardized dictionary format
     def fetch_candles(self, symbol: str, timeframe: str, limit: int, excd: str = None) -> List[Dict[str, float]]:
         base_time = datetime.now()

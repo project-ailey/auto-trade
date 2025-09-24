@@ -9,18 +9,11 @@ from indicator.indicator import Indicator
 from indicator.indicator_drawer import IndicatorDrawer
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
+from indicator.atr import ATRIndicatorDrawer, ATRIndicator
+from indicator.fvg import FVGIndicatorDrawer, FVGIndicator
 from indicator.trend_line import TrendLineIndicator, TrendLineIndicatorDrawer
 from indicator.volume import VolumeIndicatorDrawer
-
-def fetch_candles(exchange: BaseExchange, symbol: str, timeframe: str, limit: int, excd: str = None) -> List[Candle]:
-    converter = CandleConverter()
-    raw_data = exchange.fetch_candles(symbol, timeframe, limit, excd)
-    raw_data = sorted(raw_data, key=lambda c: c['timestamp'])
-    return converter.to_candles(raw_data)
-
-def apply_indicators(indicators: List[Indicator], candles: List[Candle]):
-    for indicator in indicators:
-        indicator.calculate(candles)
+from util import apply_indicators, fetch_candles
 
 def plot_candles(indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer],
                  candles: List[Candle], draw_candles: bool = True):
@@ -75,26 +68,28 @@ if __name__ == "__main__":
     mode_ma = 'sma'
     mode_atr = 'sma'
 
-    indicators = [RSIIndicator(period=14), TrendLineIndicator(),
-                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
-                  MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), ]
-
+    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineIndicator(),
+                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
+                  FVGIndicator(atr_multiplier=0.1)] # FVG must come after ATR
+    
     indicator_price_drawers = [
         TrendLineIndicatorDrawer('blue')
         , MAIndicatorDrawer(period=5, color='magenta')
-        #    , MAIndicatorDrawer(period=20, color='orange')
+    #    , MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
+        , FVGIndicatorDrawer()
     ]
 
     indicator_drawers = [
         VolumeIndicatorDrawer(),
         RSIIndicatorDrawer(),
+        ATRIndicatorDrawer(),
     ]
 
-    timeframe = "1d"
-    ticker = "ETH/USDT"
-    limit = 300
+    timeframe = "4h"
+    ticker = "BTC/USDT"
+    limit = 500
     is_draw_candle = True
 
     binance = BinanceExchange()

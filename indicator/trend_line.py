@@ -23,6 +23,9 @@ class TrendLineIndicator(Indicator):
         super().__init__(name="trend_line")
 
     def calculate(self, candles: List[Candle]) -> None:
+        if len(candles) == 0:
+            return
+
         base_candle = candles[0]
         # Decide the direction based on the first candle. Doji is treated as bearish.
         base_candle.set_indicator("trend_dir", TrendLineIndicator.UP if base_candle.is_bullish() else TrendLineIndicator.DOWN)
