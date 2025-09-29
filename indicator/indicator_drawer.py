@@ -1,5 +1,8 @@
 from abc import abstractmethod
 from typing import List
+
+from matplotlib.axes import Axes
+
 from candle import Candle
 
 class IndicatorDrawer:
@@ -8,5 +11,5 @@ class IndicatorDrawer:
         self.color = color
 
     @abstractmethod
-    def draw(self, target_plot, timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]) -> None:
+    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
         pass

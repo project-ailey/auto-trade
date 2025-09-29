@@ -53,10 +53,10 @@ class ATRIndicatorDrawer(IndicatorDrawer):
     def __init__(self) -> None:
         super().__init__(name="atr", color='purple')
 
-    def draw(self, target_plot: Axes, timestamps: List[float64], opens, closes, lows, highs, volumes, candles: List[Candle]) -> None:
+    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
         vals = [c.get_indicator(self.name) for c in candles]
         arr = np.array([v if v is not None else np.nan for v in vals], dtype=float)
-        target_plot.plot(timestamps, arr, label=self.name.upper(), linewidth=1.5, linestyle='-', color=self.color)
+        target_plot.plot(indexes, arr, label=self.name.upper(), linewidth=1.5, linestyle='-', color=self.color)
         target_plot.set_ylabel(self.name.upper())
         target_plot.set_xlabel('Time')
         target_plot.legend()

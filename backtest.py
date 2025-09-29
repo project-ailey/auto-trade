@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineIndicator(),
                   MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
-                  FVGIndicator(atr_multiplier=0.1)] # FVG must come after ATR
+                  FVGIndicator('zigzag', atr_multiplier=0.1)] # FVG must come after ATR
 
     indicator_price_drawers = [
         TrendLineIndicatorDrawer('blue')

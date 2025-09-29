@@ -46,15 +46,15 @@ class RSIIndicatorDrawer(IndicatorDrawer):
     def __init__(self):
         super().__init__(name=f"rsi", color='black')
 
-    def draw(self, target_plot: Axes, timestamps: List[float64], opens, closes, lows, highs, volumes, candles: List[Candle]):
+    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
         rsis = [c.get_indicator("rsi") for c in candles]
 
         # RSI plot (lower panel)
-        target_plot.plot(timestamps, rsis, 'm-', label='RSI')
+        target_plot.plot(indexes, rsis, 'm-', label='RSI')
         target_plot.axhline(70, color='red', linestyle='--', alpha=0.5)
         target_plot.axhline(30, color='green', linestyle='--', alpha=0.5)
         target_plot.set_ylim(0, 100)
         target_plot.set_ylabel('RSI')
-        target_plot.set_xlabel('Time')
+        #target_plot.set_xlabel('Time')
         target_plot.legend()
         target_plot.grid(True)

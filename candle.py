@@ -35,8 +35,3 @@ class Candle:
 
     def is_doji(self):
         return self.open == self.close
-
-    def __str__(self) -> str:
-        return (f"Candle(timestamp={self.timestamp}, open={self.open}, "
-                f"close={self.close}, low={self.low}, high={self.high}, "
-                f"volume={self.volume}, is_uptrend={self.is_uptrend}, indicators={self.indicators})")
