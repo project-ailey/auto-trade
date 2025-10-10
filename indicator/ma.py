@@ -1,9 +1,8 @@
 from typing import List
 from indicator.indicator import Indicator
-from candle import Candle
+from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
 from matplotlib.axes import Axes
-from numpy import float64
 import numpy as np
 
 # Moving Average indicator implementation (mode='sma' or 'ema')

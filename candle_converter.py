@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Dict
-from candle import Candle
+from model.candle import Candle
 
 class CandleConverter:
 

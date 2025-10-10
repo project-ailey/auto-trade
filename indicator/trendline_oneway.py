@@ -1,11 +1,7 @@
 from typing import List
 
-from matplotlib.axes import Axes
+from model.candle import Candle
 
-from indicator.indicator import Indicator
-from candle import Candle
-
-from indicator.indicator_drawer import IndicatorDrawer
 from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawer
 
 

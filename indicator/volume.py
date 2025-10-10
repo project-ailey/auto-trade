@@ -1,9 +1,8 @@
 from typing import List
 
 from matplotlib.axes import Axes
-from numpy import float64
 
-from candle import Candle
+from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
 
 

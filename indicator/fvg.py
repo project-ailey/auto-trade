@@ -1,11 +1,9 @@
 from typing import List, Dict
 from matplotlib.axes import Axes
-import matplotlib.dates as mdates
 from matplotlib.patches import Rectangle
 from indicator.indicator import Indicator
-from candle import Candle
+from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
-from numpy import float64
 
 from indicator.trendline_base import TrendLineIndicator
 

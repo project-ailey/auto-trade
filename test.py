@@ -1,6 +1,6 @@
 from typing import List
 import matplotlib.pyplot as plt
-from candle import Candle
+from model.candle import Candle
 from exchange.binance import BinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
 from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
@@ -8,7 +8,6 @@ from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
 from indicator.indicator_drawer import IndicatorDrawer
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
-from indicator.trendline_oneway import TrendLineOnewayIndicator, TrendLineOnewayIndicatorDrawer
 from indicator.trendline_zigzag import TrendLineZigZagIndicator, TrendLineZigZagIndicatorDrawer
 from indicator.volume import VolumeIndicatorDrawer
 from util import apply_indicators, fetch_candles

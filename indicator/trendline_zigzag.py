@@ -1,5 +1,5 @@
 from typing import List
-from candle import Candle
+from model.candle import Candle
 
 from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawer
 

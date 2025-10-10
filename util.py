@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List
 
-from candle import Candle
+from model.candle import Candle
 from candle_converter import CandleConverter
 from exchange.base import BaseExchange
 from indicator.indicator import Indicator

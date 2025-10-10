@@ -3,7 +3,7 @@ from typing import List
 from matplotlib.axes import Axes
 
 from indicator.indicator import Indicator
-from candle import Candle
+from model.candle import Candle
 from numpy import float64
 
 from indicator.indicator_drawer import IndicatorDrawer

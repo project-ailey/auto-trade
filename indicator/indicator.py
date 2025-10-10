@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
-from candle import Candle
+from model.candle import Candle
 
 # Abstract base class for indicators
 class Indicator(ABC):
