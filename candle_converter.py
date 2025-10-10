@@ -9,7 +9,7 @@ class CandleConverter:
         candles = []
         for entry in data:
             candle = Candle(
-                timestamp=datetime.fromtimestamp(entry["timestamp"] / 1000),
+                timestamp=datetime.utcfromtimestamp(entry["timestamp"] / 1000),
                 open_price=float(entry["open"]),
                 close_price=float(entry["close"]),
                 low_price=float(entry["low"]),

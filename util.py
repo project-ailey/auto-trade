@@ -41,7 +41,8 @@ def find_regular_market_candle_time_after(exchange: BaseExchange, timeframe: str
     regular_start = datetime(time.year, time.month, time.day, regular_market_start_hour, regular_market_start_minute)
     regular_end = datetime(time.year, time.month, time.day, regular_market_end_hour, regular_market_end_minute)
 
-    if time >= regular_start and time <= regular_end:   # If it's outside regular trading hours
+    is_allday = regular_market_start_hour == 0 and regular_market_start_minute == 0 and regular_market_end_hour == 0 and regular_market_end_minute == 0
+    if is_allday or time >= regular_start and time <= regular_end:
         cur_time = datetime(time.year, time.month, time.day, market_start_hour, market_start_minute)
         # Find where the included candle is located
         while True:
@@ -66,7 +67,8 @@ def find_regular_market_candle_time_before(exchange: BaseExchange, timeframe: st
     regular_start = datetime(time.year, time.month, time.day, regular_market_start_hour, regular_market_start_minute)
     regular_end = datetime(time.year, time.month, time.day, regular_market_end_hour, regular_market_end_minute)
 
-    if time >= regular_start and time <= regular_end:   # If it's outside regular trading hours
+    is_allday = regular_market_start_hour == 0 and regular_market_start_minute == 0 and regular_market_end_hour == 0 and regular_market_end_minute == 0
+    if is_allday or time >= regular_start and time <= regular_end:
         cur_time = datetime(time.year, time.month, time.day, market_start_hour, market_start_minute)
         # Find where the included candle is located
         while True:

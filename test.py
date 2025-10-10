@@ -107,8 +107,10 @@ if __name__ == "__main__":
 
     exchange = BinanceExchange()
     candles = fetch_candles(exchange, ticker, timeframe, limit, excd)
+    if candles != None:
+        apply_indicators(indicators, candles)
 
-    apply_indicators(indicators, candles)
+    #candles = candles[:100]
 
     # Draw chart
     plot_candles(indicator_price_drawers, indicator_drawers, candles, draw_candles=is_draw_candle)

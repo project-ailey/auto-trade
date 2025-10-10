@@ -36,3 +36,6 @@ class BaseExchange:
         num = int(''.join(filter(str.isdigit, timeframe)))
         unit = ''.join(filter(str.isalpha, timeframe))
         return num * units.get(unit, 60)  # default is minutes
+
+    def fetch_tickers(self):
+        return None

@@ -28,3 +28,6 @@ class BinanceExchange(BaseExchange):
             }
             for entry in raw_data
         ]
+
+    def fetch_tickers(self):
+        return self.api.fetch_tickers()
