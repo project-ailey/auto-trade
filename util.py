@@ -6,17 +6,22 @@ from candle_converter import CandleConverter
 from exchange.base import BaseExchange
 from indicator.indicator import Indicator
 
-def fetch_candles(exchange: BaseExchange, symbol: str, timeframe: str, limit: int, excd: str = None) -> List[Candle]:
+def fetch_candles(symbol, exchange: BaseExchange, timeframe: str, limit: int, indicators: List[Indicator]) -> List[Candle]:
     converter = CandleConverter()
-    raw_data = exchange.fetch_candles(symbol, timeframe, limit, excd)
+    raw_data = exchange.fetch_candles(symbol.ticker, timeframe, limit, symbol.excd)
     raw_data = sorted(raw_data, key=lambda c: c['timestamp'])
-    return converter.to_candles(raw_data)
 
-def apply_indicators(indicators: List[Indicator], candles: List[Candle]):
+    candles = converter.to_candles(raw_data)
+    if len(candles) > 0:
+        symbol.add_candles(timeframe, candles)
+
+    if indicators != None and len(indicators) > 0:
+        apply_indicators(symbol, timeframe, indicators)
+
+def apply_indicators(symbol, timeframe, indicators: List[Indicator]):
     for indicator in indicators:
-        indicator.calculate(candles)
+        indicator.calculate(symbol, timeframe)
 
-# Convert timeframe string to seconds
 def timeframe_to_seconds(timeframe: str) -> int:
     units = {"m": 60, "h": 3600, "d": 86400, "w": 604800, "M": 2592000}  # week, month added
     num = int(''.join(filter(str.isdigit, timeframe)))

@@ -5,6 +5,7 @@ from matplotlib.axes import Axes
 from indicator.indicator import Indicator
 from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
+from model.symbol import Symbol
 
 class RSIIndicator(Indicator):
 
@@ -12,7 +13,9 @@ class RSIIndicator(Indicator):
         super().__init__(name="rsi")
         self.period = period
 
-    def calculate(self, candles: List[Candle]) -> None:
+    def calculate(self, symbol, timeframe: str) -> None:
+        candles = symbol.get_candles(timeframe)
+
         if len(candles) < self.period:
             for candle in candles:
                 candle.set_indicator(self.name, None)
@@ -45,7 +48,9 @@ class RSIIndicatorDrawer(IndicatorDrawer):
     def __init__(self):
         super().__init__(name=f"rsi", color='black')
 
-    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
+    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
+        candles = symbol.get_candles(timeframe)
+
         rsis = [c.get_indicator("rsi") for c in candles]
 
         # RSI plot (lower panel)

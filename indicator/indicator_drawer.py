@@ -11,5 +11,5 @@ class IndicatorDrawer:
         self.color = color
 
     @abstractmethod
-    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
+    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
         pass

@@ -9,5 +9,5 @@ class Indicator(ABC):
 
     # Calculate indicator and store in candles
     @abstractmethod
-    def calculate(self, candles: List[Candle]) -> None:
+    def calculate(self, symbol, timeframe: str) -> None:
         pass

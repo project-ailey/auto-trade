@@ -10,10 +10,13 @@ from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
 from indicator.trendline_zigzag import TrendLineZigZagIndicator, TrendLineZigZagIndicatorDrawer
 from indicator.volume import VolumeIndicatorDrawer
+from model.symbol import Symbol
 from util import apply_indicators, fetch_candles
 
 
-def plot_candles(indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], candles: List[Candle], draw_candles: bool = True):
+def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], draw_candles: bool = True):
+    candles = symbol.get_candles(timeframe)
+
     indexes = list(range(len(candles)))
     timestamps = [c.timestamp for c in candles]
     opens = [c.open for c in candles]
@@ -39,12 +42,15 @@ def plot_candles(indicator_price_drawers: List[IndicatorDrawer], indicator_drawe
     # Candlestick chart
     if draw_candles:
         for i in range(len(candles)):
-            color = 'green' if closes[i] >= opens[i] else 'red'
+            if candles[i].get_indicator("fvg_ob") != None or candles[i].get_indicator("fvg_ob_candle") != None:
+                color = 'black'
+            else:
+                color = 'green' if closes[i] >= opens[i] else 'red'
             price_ax.plot([indexes[i], indexes[i]], [lows[i], highs[i]], color='black', linewidth=1)
             price_ax.plot([indexes[i], indexes[i]], [opens[i], closes[i]], color=color, linewidth=3)
 
     for drawer in indicator_price_drawers:
-        drawer.draw(price_ax, indexes, timestamps, opens, closes, lows, highs, volumes, candles)
+        drawer.draw(symbol, timeframe, price_ax, indexes, timestamps, opens, closes, lows, highs, volumes)
 
     price_ax.set_ylabel('Price')
     price_ax.set_title('Candlestick Chart')
@@ -63,7 +69,7 @@ def plot_candles(indicator_price_drawers: List[IndicatorDrawer], indicator_drawe
 
     # Indicators
     for i in range(len(indicator_drawers)):
-        indicator_drawers[i].draw(indicators_axs[i], indexes, indexes, opens, closes, lows, highs, volumes, candles)
+        indicator_drawers[i].draw(symbol, timeframe, indicators_axs[i], indexes, indexes, opens, closes, lows, highs, volumes)
 
     handles, labels = price_ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
@@ -88,7 +94,7 @@ if __name__ == "__main__":
         , MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
-        , FVGIndicatorDrawer()
+        , FVGIndicatorDrawer(True, True)
     ]
 
     indicator_drawers = [
@@ -105,11 +111,11 @@ if __name__ == "__main__":
     limit = 200
 
     exchange = BinanceExchange()
-    candles = fetch_candles(exchange, ticker, timeframe, limit, excd)
-    if candles != None:
-        apply_indicators(indicators, candles)
 
     #candles = candles[:100]
 
+    symbol = Symbol(ticker, excd, 'zigzag')
+    fetch_candles(symbol, exchange, timeframe, limit, indicators)
+
     # Draw chart
-    plot_candles(indicator_price_drawers, indicator_drawers, candles, draw_candles=is_draw_candle)
+    plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle)

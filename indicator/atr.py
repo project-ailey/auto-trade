@@ -5,6 +5,7 @@ import numpy as np
 from indicator.indicator import Indicator
 from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
+from model.symbol import Symbol
 
 # ATR (Average True Range) indicator implementation
 # mode="sma" for simple moving average ATR,
@@ -17,7 +18,9 @@ class ATRIndicator(Indicator):
         self.period = period
         self.mode = mode
 
-    def calculate(self, candles: List[Candle]) -> None:
+    def calculate(self, symbol, timeframe: str) -> None:
+        candles = symbol.get_candles(timeframe)
+
         n = len(candles)
         min_required = self.period if self.mode == "sma" else self.period + 1
         if n < min_required:
@@ -52,7 +55,9 @@ class ATRIndicatorDrawer(IndicatorDrawer):
     def __init__(self) -> None:
         super().__init__(name="atr", color='purple')
 
-    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
+    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
+        candles = symbol.get_candles(timeframe)
+
         vals = [c.get_indicator(self.name) for c in candles]
         arr = np.array([v if v is not None else np.nan for v in vals], dtype=float)
         target_plot.plot(indexes, arr, label=self.name.upper(), linewidth=1.5, linestyle='-', color=self.color)

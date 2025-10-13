@@ -53,6 +53,15 @@ class TrendLineIndicator(Indicator):
         return None
 
     @staticmethod
+    def get_prev_swing_swing_point(trend_type, current_index, candles: List[Candle]):
+        for i in range(current_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.TOP) or (
+                    c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
+                return i
+        return None
+
+    @staticmethod
     def get_next_swing_swing_point(trend_type, current_index, candles: List[Candle]):
         for i in range(current_index + 1, len(candles), 1):
             c = candles[i]
@@ -61,7 +70,45 @@ class TrendLineIndicator(Indicator):
                 return i
         return None
 
-    def calculate(self, candles: List[Candle]) -> None:
+    @staticmethod
+    def get_prev_trend_high(trend_type, current_index, candles: List[Candle]):
+        for i in range(current_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.TOP):
+                return i
+        return 0 if current_index > 0 and len(candles) > 0 else None
+
+    @staticmethod
+    def get_prev_trend_low(trend_type, current_index, candles: List[Candle]):
+        for i in range(current_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
+                return i
+        return 0 if current_index > 0 and len(candles) > 0 else None
+
+    @staticmethod
+    def get_prev_trend_swing_point(trend_type, current_index, candles: List[Candle]):
+        for i in range(current_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.TOP) or (
+                    c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
+                return i
+        return None
+
+    @staticmethod
+    def get_next_trend_swing_point(trend_type, current_index, candles: List[Candle]):
+        for i in range(current_index + 1, len(candles), 1):
+            c = candles[i]
+            if (c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.TOP) or (
+                    c.get_indicator('trend_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
+                return i
+        return None
+
+
+
+    def calculate(self, symbol, timeframe: str) -> None:
+        candles = symbol.get_candles(timeframe)
+
         if len(candles) == 0:
             return
 
@@ -184,7 +231,9 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
         self.trend_type = trend_type
         self.swing_color = swing_color
 
-    def draw(self, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes, candles: List[Candle]):
+    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
+        candles = symbol.get_candles(timeframe)
+
         if self.swing_color != None:
             swing_prices = [c.get_indicator("swing_price_" + self.trend_type) for c in candles]
             swing_points = []
