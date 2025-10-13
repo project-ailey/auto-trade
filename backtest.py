@@ -2,31 +2,36 @@ from datetime import timedelta, datetime
 
 import pytz
 
-from exchange.binance import CryptoBinanceExchange
+from exchange.crypto_binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
 from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
 
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
-from indicator.trend_line import TrendLineIndicator, TrendLineIndicatorDrawer
+
+from indicator.trendline_zigzag import TrendLineZigZagIndicator, TrendLineZigZagIndicatorDrawer
 from indicator.volume import VolumeIndicatorDrawer
-from util import fetch_candles, apply_indicators, find_regular_market_candle_time_after, \
-    find_regular_market_candle_time_before, timeframe_to_minutes
+from exchange.util import find_regular_market_candle_time_after, find_regular_market_candle_time_before, \
+    timeframe_to_minutes
+from model.symbol import Symbol
+from util import fetch_candles
 
 if __name__ == "__main__":
     mode_ma = 'sma'
-    mode_atr = 'ema'
+    mode_atr = 'sma'
 
-    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineIndicator(),
-                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
-                  FVGIndicator('zigzag', atr_multiplier=0.1)] # FVG must come after ATR
+    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagIndicator(5), #TrendLineOnewayIndicator(),
+                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
+                  FVGIndicator('zigzag', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
 
     indicator_price_drawers = [
-        TrendLineIndicatorDrawer('blue')
-        , MAIndicatorDrawer(period=5, color='magenta')
+        TrendLineZigZagIndicatorDrawer('red', 'blue')
+        #TrendLineOnewayIndicatorDrawer('red', 'blue')
+        #, MAIndicatorDrawer(period=5, color='magenta')
+        #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
-        , FVGIndicatorDrawer()
+        , FVGIndicatorDrawer(True, True)
     ]
 
     indicator_drawers = [
@@ -35,15 +40,18 @@ if __name__ == "__main__":
         ATRIndicatorDrawer(),
     ]
 
-    timeframe = "1d"
     ticker = "ETH/USDT"
-    limit = 300
-    is_draw_candle = True
+    excd = None
 
-    binance = CryptoBinanceExchange()
-    candles = fetch_candles(binance, ticker, timeframe, limit)
+    timeframe = "1d"
+    days = 200
 
-    apply_indicators(indicators, candles)
+    exchange = CryptoBinanceExchange()
+
+    symbol = Symbol(ticker, excd, 'zigzag')
+    fetch_candles(symbol, exchange, timeframe, datetime.now()-timedelta(days=days), indicators)
+
+    candles = symbol.get_candles(timeframe)
 
     #--------------------------------------------------
     # backtest
@@ -57,8 +65,8 @@ if __name__ == "__main__":
     end = datetime(et_end.year, et_end.month, et_end.day, et_end.hour, et_end.minute, et_end.second)
 
     # recalculate candle position
-    start = find_regular_market_candle_time_after(binance, timeframe, start)
-    end = find_regular_market_candle_time_before(binance, timeframe, end)
+    start = find_regular_market_candle_time_after(exchange, timeframe, start)
+    end = find_regular_market_candle_time_before(exchange, timeframe, end)
 
     # run
     cur_time = start

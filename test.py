@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 from typing import List
 import matplotlib.pyplot as plt
 from model.candle import Candle
@@ -83,15 +84,15 @@ if __name__ == "__main__":
     mode_ma = 'sma'
     mode_atr = 'sma'
 
-    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagIndicator(5), #TrendLineOnewayIndicator(),
-                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
-                  FVGIndicator('zigzag', atr_multiplier=0.1)] # FVG must come after ATR
+    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagIndicator(5), # TrendLineOnewayIndicator(),
+                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
+                  FVGIndicator('zigzag', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
     
     indicator_price_drawers = [
         TrendLineZigZagIndicatorDrawer('red', 'blue')
         #TrendLineOnewayIndicatorDrawer('red', 'blue')
-        , MAIndicatorDrawer(period=5, color='magenta')
-        , MAIndicatorDrawer(period=20, color='orange')
+        #, MAIndicatorDrawer(period=5, color='magenta')
+        #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
         , FVGIndicatorDrawer(True, True)
@@ -107,15 +108,14 @@ if __name__ == "__main__":
 
     ticker = "BTC/USDT"
     excd = None
+
     timeframe = "1d"
-    limit = 200
+    days = 200
 
     exchange = CryptoBinanceExchange()
 
-    #candles = candles[:100]
-
     symbol = Symbol(ticker, excd, 'zigzag')
-    fetch_candles(symbol, exchange, timeframe, limit, indicators)
+    fetch_candles(symbol, exchange, timeframe, datetime.now()-timedelta(days=days), indicators)
 
     # Draw chart
     plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle)

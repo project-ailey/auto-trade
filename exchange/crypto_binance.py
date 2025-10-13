@@ -1,25 +1,31 @@
+from datetime import datetime, timezone
+
 from exchange.base import BaseExchange
 from typing import List, Dict
 import ccxt
 import time
 
-# Binance exchange implementation (using ccxt)
+from exchange.util import timeframe_to_seconds, timeframe_to_minutes
+
+
 class CryptoBinanceExchange(BaseExchange):
 
     def __init__(self):
         self.api = ccxt.binance()  # Can use public data without API key
 
     # Fetch latest candle data from Binance
-    def fetch_candles(self, symbol: str, timeframe: str, limit: int, excd: str = None) -> List[Dict[str, float]]:
-        # Calculate start time going back 'limit' candles from current time
-        timeframe_in_seconds = self._timeframe_to_seconds(timeframe)
-        since = int(time.time() * 1000) - (limit * timeframe_in_seconds * 1000)  # in milliseconds
+    def fetch_candles(self, ticker: str, timeframe: str, since: datetime, excd: str = None) -> List[Dict[str, float]]:
+        since_ms = int(since.timestamp() * 1000)  # in milliseconds
+
+        # calculate limit
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        limit = int((now_ms - since_ms) / (timeframe_to_seconds(timeframe) * 1000)) + 1
 
         # Pass 'since' as a separate argument, not as params
-        raw_data = self.api.fetch_ohlcv(symbol, timeframe, since=since, limit=limit)
-        return [
+        raw_data = self.api.fetch_ohlcv(ticker, timeframe, since=since_ms, limit=limit)
+        result = [
             {
-                "timestamp": float(entry[0]),
+                "timestamp": datetime.fromtimestamp(float(entry[0]) / 1000, tz=timezone.utc),
                 "open": float(entry[1]),
                 "high": float(entry[2]),
                 "low": float(entry[3]),
@@ -28,6 +34,8 @@ class CryptoBinanceExchange(BaseExchange):
             }
             for entry in raw_data
         ]
+
+        return result
 
     def fetch_tickers(self):
         return self.api.fetch_tickers()
