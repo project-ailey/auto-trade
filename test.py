@@ -1,7 +1,7 @@
 from typing import List
 import matplotlib.pyplot as plt
 from model.candle import Candle
-from exchange.binance import BinanceExchange
+from exchange.crypto_binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
 from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     timeframe = "1d"
     limit = 200
 
-    exchange = BinanceExchange()
+    exchange = CryptoBinanceExchange()
 
     #candles = candles[:100]
 

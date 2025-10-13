@@ -4,7 +4,7 @@ import ccxt
 import time
 
 # Binance exchange implementation (using ccxt)
-class BinanceExchange(BaseExchange):
+class CryptoBinanceExchange(BaseExchange):
 
     def __init__(self):
         self.api = ccxt.binance()  # Can use public data without API key

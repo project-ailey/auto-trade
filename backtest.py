@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 
 import pytz
 
-from exchange.binance import BinanceExchange
+from exchange.binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
 from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     limit = 300
     is_draw_candle = True
 
-    binance = BinanceExchange()
+    binance = CryptoBinanceExchange()
     candles = fetch_candles(binance, ticker, timeframe, limit)
 
     apply_indicators(indicators, candles)
