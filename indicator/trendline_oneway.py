@@ -6,8 +6,8 @@ from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawe
 
 
 class TrendLineOnewayIndicator(TrendLineIndicator):
-    def __init__(self):
-        super().__init__(trend_type="oneway")
+    def __init__(self, trend_atr_multiplier: float = 2):
+        super().__init__(trend_type="oneway", trend_atr_multiplier=trend_atr_multiplier)
 
     def calculate_swing_lines(self, candles: List[Candle]) -> None:
         # calculate swing trend
@@ -61,5 +61,5 @@ class TrendLineOnewayIndicator(TrendLineIndicator):
                 print('error')
 
 class TrendLineOnewayIndicatorDrawer(TrendLineIndicatorDrawer):
-    def __init__(self, color: str, swing_color: str):
-        super().__init__('oneway', color, swing_color)
+    def __init__(self, swing_color: str, trend_color: str):
+        super().__init__('oneway', swing_color, trend_color)

@@ -61,7 +61,7 @@ class FVGIndicator(Indicator):
 
         return (-1, -1)
 
-    def calculate(self, symbol, timeframe: str) -> None:
+    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
         candles = symbol.get_candles(timeframe)
 
         raws: List[Dict] = []
@@ -191,7 +191,7 @@ class FVGIndicatorDrawer(IndicatorDrawer):
 
                 target_plot.add_patch(rect)
 
-        # self.draw_ltf(symbol, '15m', target_plot, timestamps)
+        #self.draw_ltf(symbol, '15m', target_plot, timestamps)
 
     def draw_ltf(self, symbol, lower_timeframe: str, target_plot: Axes, ht_timestamps: List[datetime]):
 

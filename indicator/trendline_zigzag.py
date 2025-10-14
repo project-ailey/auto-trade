@@ -5,8 +5,8 @@ from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawe
 
 
 class TrendLineZigZagIndicator(TrendLineIndicator):
-    def __init__(self, zigzag_deviation_percent: float = 5.0):
-        super().__init__(trend_type="zigzag")
+    def __init__(self, zigzag_deviation_percent: float = 5.0, trend_atr_multiplier: float = 2):
+        super().__init__(trend_type="zigzag", trend_atr_multiplier=trend_atr_multiplier)
 
         self.zigzag_deviation_percent = zigzag_deviation_percent
 
@@ -83,7 +83,6 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
             candles[idx].set_indicator('swing_price_' + self.trend_type, price)
             candles[idx].set_indicator('swing_dir_' + self.trend_type, t_dir)
 
-
 class TrendLineZigZagIndicatorDrawer(TrendLineIndicatorDrawer):
-    def __init__(self, color: str, swing_color: str):
-        super().__init__('zigzag', color, swing_color)
+    def __init__(self, swing_color: str, trend_color: str):
+        super().__init__('zigzag', swing_color, trend_color)

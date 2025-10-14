@@ -25,7 +25,7 @@ class CryptoBinanceExchange(BaseExchange):
         raw_data = self.api.fetch_ohlcv(ticker, timeframe, since=since_ms, limit=limit)
         result = [
             {
-                "timestamp": datetime.fromtimestamp(float(entry[0]) / 1000, tz=timezone.utc),
+                "timestamp": datetime.fromtimestamp(float(entry[0]) / 1000, tz=timezone.utc).replace(tzinfo=None),  # remove the timezone information
                 "open": float(entry[1]),
                 "high": float(entry[2]),
                 "low": float(entry[3]),

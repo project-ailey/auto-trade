@@ -18,7 +18,7 @@ class ATRIndicator(Indicator):
         self.period = period
         self.mode = mode
 
-    def calculate(self, symbol, timeframe: str) -> None:
+    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
         candles = symbol.get_candles(timeframe)
 
         n = len(candles)

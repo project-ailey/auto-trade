@@ -8,7 +8,7 @@ from exchange.util import timeframe_to_seconds, find_regular_market_candle_time_
 class BaseExchange:
 
     def get_market_time(self):
-        return (0, 0, 0, 0, 0, 0)   # market_start_hour / minute, regular_market_start_hour / minute, regular_market_end_hour / minute
+        return (0, 0, 0, 0, 0, 0)   # (start_h, start_m, r_start_h, r_start_m, r_end_h, r_end_m)
 
     def fetch_candles(self, ticker: str, timeframe: str, since: datetime, excd: str = None) -> List[Dict[str, float]]:
         candles = []

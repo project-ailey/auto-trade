@@ -1,15 +1,19 @@
 from datetime import timedelta, datetime
 from typing import List
 import matplotlib.pyplot as plt
+
+from indicator.ma_daily import MADailyIndicator, MADailyIndicatorDrawer
+from indicator.trendline_oneway import TrendLineOnewayIndicatorDrawer
+from indicator.trendline_zigzag import TrendLineZigZagIndicatorDrawer
 from model.candle import Candle
 from exchange.crypto_binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
 from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
-
+ 
 from indicator.indicator_drawer import IndicatorDrawer
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
-from indicator.trendline_zigzag import TrendLineZigZagIndicator, TrendLineZigZagIndicatorDrawer
+from indicator.trendline_zigzag_atr import TrendLineZigZagAtrIndicator, TrendLineZigZagAtrIndicatorDrawer
 from indicator.volume import VolumeIndicatorDrawer
 from model.symbol import Symbol
 from util import apply_indicators, fetch_candles
@@ -35,7 +39,7 @@ def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[Indicator
     # 0 = price chart
     # 1 ~ 1 + len(indicator_drawers) = indicators
     fig, axs = plt.subplots(1 + len(indicator_drawers), 1, figsize=(12, 8), sharex=True,
-                            gridspec_kw={'height_ratios': [3] + [1] * len(indicator_drawers)})
+                                   gridspec_kw={'height_ratios': [3] + [1]*len(indicator_drawers)})
 
     price_ax = axs[0]
     indicators_axs = axs[1:]
@@ -84,24 +88,28 @@ if __name__ == "__main__":
     mode_ma = 'sma'
     mode_atr = 'sma'
 
-    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagIndicator(5), # TrendLineOnewayIndicator(),
+    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),  #TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
                   MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
-                  FVGIndicator('zigzag', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
+                  MADailyIndicator(period=10, mode=mode_ma), MADailyIndicator(period=20, mode=mode_ma),
+                  FVGIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)] # FVG must come after ATR
     
     indicator_price_drawers = [
-        TrendLineZigZagIndicatorDrawer('red', 'blue')
-        #TrendLineOnewayIndicatorDrawer('red', 'blue')
+        TrendLineZigZagAtrIndicatorDrawer('blue', 'red')
+        #, TrendLineZigZagIndicatorDrawer('blue', 'red')
+        #, TrendLineOnewayIndicatorDrawer('blue', 'red')
         #, MAIndicatorDrawer(period=5, color='magenta')
         #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
+        , MADailyIndicatorDrawer(period=10, color='deepskyblue')
+        , MADailyIndicatorDrawer(period=20, color='orange')
         , FVGIndicatorDrawer(True, True)
     ]
 
     indicator_drawers = [
         VolumeIndicatorDrawer(),
-        RSIIndicatorDrawer(),
-        ATRIndicatorDrawer(),
+        #RSIIndicatorDrawer(),
+        #ATRIndicatorDrawer(),
     ]
 
     is_draw_candle = True
@@ -109,13 +117,21 @@ if __name__ == "__main__":
     ticker = "BTC/USDT"
     excd = None
 
-    timeframe = "1d"
-    days = 200
+    days_1d = 500
+
+    timeframe = "4h"
+    days = 50
 
     exchange = CryptoBinanceExchange()
 
-    symbol = Symbol(ticker, excd, 'zigzag')
-    fetch_candles(symbol, exchange, timeframe, datetime.now()-timedelta(days=days), indicators)
+    symbol = Symbol(ticker, excd, 'zigzag_atr')
+    fetch_candles(symbol, exchange, "1d", datetime.now() - timedelta(days=days_1d))
+    if indicators != None and len(indicators) > 0:
+        apply_indicators(symbol, "1d", indicators)
+
+    fetch_candles(symbol, exchange, timeframe, datetime.now()-timedelta(days=days))
+    if indicators != None and len(indicators) > 0:
+        apply_indicators(symbol, timeframe, indicators)
 
     # Draw chart
     plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle)

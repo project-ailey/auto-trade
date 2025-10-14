@@ -16,9 +16,10 @@ class TrendLineIndicator(Indicator):
     ENGULFED_IN_UP = 5,
     ENGULFED_IN_DOWN = 6,
 
-    def __init__(self, trend_type: str):
+    def __init__(self, trend_type: str, trend_atr_multiplier: float):
         super().__init__(name="trendline_" + trend_type)
         self.trend_type = trend_type
+        self.trendline_atr_multiplier = trend_atr_multiplier
 
     @staticmethod
     def get_prev_swing_high(trend_type, current_index, candles: List[Candle]):
@@ -104,9 +105,84 @@ class TrendLineIndicator(Indicator):
                 return i
         return None
 
+    @staticmethod
+    def apply_zigzag_with_atr(swing_dir_key_name, swing_price_key_name, atr_multiplier, candles: List[Candle]) -> None:
+        # Step 1: Find the index of the first candle with a valid ATR
+        start_index = -1
+        for i, candle in enumerate(candles):
+            if candle.get_indicator('atr') is not None:
+                start_index = i
+                break
 
+        # If there is no valid starting point or insufficient data, exit the function
+        if start_index == -1 or len(candles) < start_index + 2:
+            print("lack atrs")
+            return
 
-    def calculate(self, symbol, timeframe: str) -> None:
+        # Step 2: Initialize variables starting from the valid point
+        pivots = []
+        last_pivot_price = candles[start_index].close
+        trend_dir = None
+
+        candidate_pivot_price = last_pivot_price
+        candidate_pivot_idx = start_index
+
+        # Step 3: Main loop starting from the next candle after the valid point
+        for i in range(start_index + 1, len(candles)):
+            current_candle = candles[i]
+            atr_at_pivot = candles[candidate_pivot_idx].get_indicator('atr')
+
+            # Assume there are no candles without ATR after start_index
+            # But if being defensive, a check could be added
+            if atr_at_pivot is None: continue
+
+            threshold = atr_multiplier * atr_at_pivot
+
+            if trend_dir is None:  # Determine initial trend
+                if current_candle.high - last_pivot_price >= threshold:
+                    trend_dir = TrendLineIndicator.UP
+                    candidate_pivot_price = current_candle.high
+                    candidate_pivot_idx = i
+                elif last_pivot_price - current_candle.low >= threshold:
+                    trend_dir = TrendLineIndicator.DOWN
+                    candidate_pivot_price = current_candle.low
+                    candidate_pivot_idx = i
+
+            elif trend_dir == TrendLineIndicator.UP:  # Uptrend (finding highs)
+                if current_candle.high > candidate_pivot_price:
+                    candidate_pivot_price = current_candle.high
+                    candidate_pivot_idx = i
+                else:
+                    retrace_price = candidate_pivot_price - current_candle.low
+                    if retrace_price >= threshold:
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.TOP))
+                        trend_dir = TrendLineIndicator.DOWN
+                        candidate_pivot_price = current_candle.low
+                        candidate_pivot_idx = i
+
+            elif trend_dir == TrendLineIndicator.DOWN:  # Downtrend (finding lows)
+                if current_candle.low < candidate_pivot_price:
+                    candidate_pivot_price = current_candle.low
+                    candidate_pivot_idx = i
+                else:
+                    retrace_price = current_candle.high - candidate_pivot_price
+                    if retrace_price >= threshold:
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.BOTTOM))
+                        trend_dir = TrendLineIndicator.UP
+                        candidate_pivot_price = current_candle.high
+                        candidate_pivot_idx = i
+
+        # Apply confirmed pivots to candles
+        last_offset = 0
+        for idx, price, t_dir in pivots:
+            for i in range(last_offset, idx):
+                candles[idx].set_indicator(swing_dir_key_name, TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+            last_offset = idx + 1
+
+            candles[idx].set_indicator(swing_price_key_name, price)
+            candles[idx].set_indicator(swing_dir_key_name, t_dir)
+
+    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
         candles = symbol.get_candles(timeframe)
 
         if len(candles) == 0:
@@ -119,115 +195,11 @@ class TrendLineIndicator(Indicator):
         pass
 
     def calculate_trends_dirs(self, candles: List[Candle]) -> None:
-        curr_index = 0
-
-        trend_dir_indicator_name = "trend_dir_" + self.trend_type
-        trend_price_indicator_name = "trend_price_" + self.trend_type
-
-        swing_dir_indicator_name = "swing_dir_" + self.trend_type
-        swing_price_indicator_name = "swing_price_" + self.trend_type
-
-        # Based on the first candle, determine the direction unconditionally. Doji is treated as bearish.
-        is_grab = False
-        for i in range(len(candles)):
-            if candles[i].get_indicator('swing_dir_' + self.trend_type) != None:
-                candles[i].set_indicator(trend_dir_indicator_name, candles[i].get_indicator('swing_dir_' + self.trend_type))
-                candles[i].set_indicator(trend_price_indicator_name, candles[i].get_indicator('swing_price_' + self.trend_type))
-                is_grab = True
-                break
-
-        if is_grab == False:
-            return
-
-        while curr_index < len(candles):
-            next_high = TrendLineIndicator.get_next_swing_high(self.trend_type, curr_index, candles)
-            next_low = TrendLineIndicator.get_next_swing_low(self.trend_type, curr_index, candles)
-            prev_high = TrendLineIndicator.get_prev_swing_high(self.trend_type, curr_index, candles)
-            prev_low = TrendLineIndicator.get_prev_swing_low(self.trend_type, curr_index, candles)
-
-            if candles[curr_index].get_indicator(trend_dir_indicator_name) == TrendLineIndicator.UP or candles[curr_index].get_indicator(trend_dir_indicator_name) == TrendLineIndicator.TOP:
-                if next_high and candles[next_high].high >= candles[curr_index].high:  # continue uptrend
-                    for i in range(curr_index, next_high + 1):
-                        candles[i].set_indicator(trend_dir_indicator_name, TrendLineIndicator.UP)
-                    curr_index = next_high
-
-                elif prev_low != None and next_low and candles[prev_low].low > candles[next_low].low:  # switch to downtrend
-                    candles[curr_index].set_indicator(trend_dir_indicator_name, TrendLineIndicator.TOP)
-                    candles[curr_index].set_indicator(trend_price_indicator_name, candles[curr_index].high)  # only set price on switch
-                    candles[next_low].set_indicator(trend_dir_indicator_name, TrendLineIndicator.DOWN)
-                    curr_index = next_low
-
-                else:  # neither uptrend nor downtrend
-                    is_grab = False
-                    for i in range(curr_index + 1, len(candles)):
-                        next_swing_point = TrendLineIndicator.get_next_swing_swing_point(self.trend_type, i, candles)  # keep searching until up or down
-
-                        if next_swing_point and candles[next_swing_point].high >= candles[curr_index].high:  # confirm uptrend, prioritize uptrend
-                            for j in range(curr_index, next_swing_point + 1):
-                                candles[j].set_indicator(trend_dir_indicator_name, TrendLineIndicator.UP)
-
-                            curr_index = next_swing_point
-                            is_grab = True
-                            break
-
-                        elif prev_low != None and next_swing_point and candles[next_swing_point].low < candles[prev_low].low:  # confirm downtrend
-                            candles[curr_index].set_indicator(trend_dir_indicator_name, TrendLineIndicator.TOP)
-                            candles[curr_index].set_indicator(trend_price_indicator_name, candles[curr_index].high)  # only set price on switch
-                            for j in range(curr_index + 1, next_swing_point + 1):
-                                candles[j].set_indicator(trend_dir_indicator_name, TrendLineIndicator.DOWN)
-
-                            curr_index = next_swing_point
-                            is_grab = True
-                            break
-
-                    if is_grab == False:
-                        candles[len(candles) - 1].set_indicator(trend_price_indicator_name, candles[len(candles) - 1].high)  # connect to last candle
-                        curr_index = len(candles)  # reached the end but no breakout from last structure
-
-            elif candles[curr_index].get_indicator(trend_dir_indicator_name) == TrendLineIndicator.DOWN or candles[curr_index].get_indicator(trend_dir_indicator_name) == TrendLineIndicator.BOTTOM:
-                if next_low and candles[next_low].low < candles[curr_index].low:  # continue downtrend
-                    for i in range(curr_index, next_low + 1):
-                        candles[i].set_indicator(trend_dir_indicator_name, TrendLineIndicator.DOWN)
-                    curr_index = next_low
-
-                elif prev_high and next_high and candles[prev_high].high <= candles[next_high].high:  # switch to uptrend
-                    candles[curr_index].set_indicator(trend_dir_indicator_name, TrendLineIndicator.BOTTOM)
-                    candles[curr_index].set_indicator(trend_price_indicator_name, candles[curr_index].low)  # only set price on switch
-                    candles[next_high].set_indicator(trend_dir_indicator_name, TrendLineIndicator.UP)
-                    curr_index = next_high
-
-                else:  # neither uptrend nor downtrend
-                    is_grab = False
-                    for i in range(curr_index + 1, len(candles)):
-                        next_swing_point = TrendLineIndicator.get_next_swing_swing_point(self.trend_type, i, candles)  # keep searching until up or down
-
-                        if next_swing_point and candles[next_swing_point].low < candles[curr_index].low:  # confirm downtrend, prioritize downtrend
-                            for j in range(curr_index, next_swing_point + 1):
-                                candles[j].set_indicator(trend_dir_indicator_name, TrendLineIndicator.DOWN)
-
-                            curr_index = next_swing_point
-                            is_grab = True
-                            break
-
-                        elif prev_high and next_swing_point and candles[next_swing_point].high >= candles[prev_high].high:  # confirm uptrend
-                            candles[curr_index].set_indicator(trend_dir_indicator_name, TrendLineIndicator.BOTTOM)
-                            candles[curr_index].set_indicator(trend_price_indicator_name, candles[curr_index].low)  # only set price on switch
-                            for j in range(curr_index + 1, next_swing_point + 1):
-                                candles[j].set_indicator(trend_dir_indicator_name, TrendLineIndicator.UP)
-
-                            curr_index = next_swing_point
-                            is_grab = True
-                            break
-
-                    if is_grab == False:
-                        candles[len(candles) - 1].set_indicator(trend_price_indicator_name, candles[len(candles) - 1].low)  # connect to last candle
-                        curr_index = len(candles)  # reached the end but no breakout from last structure
-            else:
-                curr_index += 1
+        TrendLineIndicator.apply_zigzag_with_atr('trend_dir_' + self.trend_type, 'trend_price_' + self.trend_type, self.trendline_atr_multiplier, candles)
 
 class TrendLineIndicatorDrawer(IndicatorDrawer):
-    def __init__(self, trend_type: str, color: str, swing_color: str):
-        super().__init__('trendline_' + trend_type, color)
+    def __init__(self, trend_type: str, swing_color: str, trend_color: str):
+        super().__init__('trendline_' + trend_type, trend_color)
         self.trend_type = trend_type
         self.swing_color = swing_color
 

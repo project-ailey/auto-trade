@@ -13,7 +13,7 @@ class RSIIndicator(Indicator):
         super().__init__(name="rsi")
         self.period = period
 
-    def calculate(self, symbol, timeframe: str) -> None:
+    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
         candles = symbol.get_candles(timeframe)
 
         if len(candles) < self.period:
