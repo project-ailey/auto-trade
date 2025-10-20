@@ -3,8 +3,8 @@ from typing import List
 import matplotlib.pyplot as plt
 
 from indicator.ma_daily import MADailyIndicator, MADailyIndicatorDrawer
-from indicator.trendline_oneway import TrendLineOnewayIndicatorDrawer
-from indicator.trendline_zigzag import TrendLineZigZagIndicatorDrawer
+from indicator.trendline_oneway import TrendLineOnewayIndicatorDrawer, TrendLineOnewayIndicator
+from indicator.trendline_zigzag import TrendLineZigZagIndicatorDrawer, TrendLineZigZagIndicator
 from model.candle import Candle
 from exchange.crypto_binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
@@ -19,7 +19,7 @@ from model.symbol import Symbol
 from util import apply_indicators, fetch_candles
 
 
-def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], draw_candles: bool = True):
+def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], draw_candles: bool = True, draw_candle_indice: bool = True):
     candles = symbol.get_candles(timeframe)
 
     indexes = list(range(len(candles)))
@@ -51,6 +51,20 @@ def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[Indicator
                 color = 'black'
             else:
                 color = 'green' if closes[i] >= opens[i] else 'red'
+
+            if draw_candle_indice:
+                x = indexes[i]
+                y = highs[i] * 1.001  # raise it by 0.1% to avoid overlap
+
+                price_ax.text(
+                    x, y,
+                    str(i),  # text to display (here, the index)
+                    ha='center',  # horizontal alignment: center
+                    va='bottom',  # vertical alignment: bottom
+                    fontsize=6,  # font size
+                    color='black',  # text color
+                    rotation=0  # rotation angle (adjust if needed)
+                )
             price_ax.plot([indexes[i], indexes[i]], [lows[i], highs[i]], color='black', linewidth=1)
             price_ax.plot([indexes[i], indexes[i]], [opens[i], closes[i]], color=color, linewidth=3)
 
@@ -91,19 +105,20 @@ if __name__ == "__main__":
     indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),  #TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
                   MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
                   MADailyIndicator(period=10, mode=mode_ma), MADailyIndicator(period=20, mode=mode_ma),
-                  FVGIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)] # FVG must come after ATR
+                  #FVGIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)
+                  ] # FVG must come after ATR
     
     indicator_price_drawers = [
-        TrendLineZigZagAtrIndicatorDrawer('blue', 'red')
-        #, TrendLineZigZagIndicatorDrawer('blue', 'red')
-        #, TrendLineOnewayIndicatorDrawer('blue', 'red')
+        TrendLineZigZagAtrIndicatorDrawer('blue', 'red', None)
+        #, TrendLineZigZagIndicatorDrawer('blue', 'red', 'magenta')
+        #, TrendLineOnewayIndicatorDrawer('blue', 'red', 'magenta')
         #, MAIndicatorDrawer(period=5, color='magenta')
         #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
         , MADailyIndicatorDrawer(period=10, color='deepskyblue')
         , MADailyIndicatorDrawer(period=20, color='orange')
-        , FVGIndicatorDrawer(True, True)
+        , FVGIndicatorDrawer(False, False)
     ]
 
     indicator_drawers = [
@@ -113,14 +128,15 @@ if __name__ == "__main__":
     ]
 
     is_draw_candle = True
+    is_draw_candle_index = False
 
     ticker = "BTC/USDT"
     excd = None
 
     days_1d = 500
 
-    timeframe = "4h"
-    days = 50
+    timeframe = "1d"
+    days = 100
 
     exchange = CryptoBinanceExchange()
 
@@ -134,4 +150,4 @@ if __name__ == "__main__":
         apply_indicators(symbol, timeframe, indicators)
 
     # Draw chart
-    plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle)
+    plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle, draw_candle_indice=is_draw_candle_index)

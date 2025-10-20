@@ -77,12 +77,12 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
         last_offset = 0
         for idx, price, t_dir in pivots:
             for i in range(last_offset, idx):
-                candles[idx].set_indicator('swing_dir_' + self.trend_type, TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+                self.set_swing_dir(candles[i], TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
             last_offset = idx + 1
 
-            candles[idx].set_indicator('swing_price_' + self.trend_type, price)
-            candles[idx].set_indicator('swing_dir_' + self.trend_type, t_dir)
+            self.set_swing_price(candles[idx], price)
+            self.set_swing_dir(candles[idx], t_dir)
 
 class TrendLineZigZagIndicatorDrawer(TrendLineIndicatorDrawer):
-    def __init__(self, swing_color: str, trend_color: str):
-        super().__init__('zigzag', swing_color, trend_color)
+    def __init__(self, swing_color: str, major_swing_color: str, trend_color: str):
+        super().__init__('zigzag', swing_color, major_swing_color, trend_color)

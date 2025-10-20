@@ -13,7 +13,7 @@ class Symbol:
         self.candle_list: Dict[str, List[Candle]] = {}
         self.candle_table: Dict[str, Dict[int, tuple[Candle, int]]] = {}
 
-    def add_candles(self, timeframe: str, candles: List[Candle]):
+    def set_candles(self, timeframe: str, candles: List[Candle]):
         self.candle_list[timeframe] = candles
         self.candle_table[timeframe] = {}
         for i in range(len(candles)):
@@ -41,37 +41,57 @@ class Symbol:
         else:
             return -1
 
-    def get_prev_swing_high(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_swing_high(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    # swing
+    def get_prev_swing_high(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_prev_swing_low(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_swing_low(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_prev_swing_low(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_next_swing_high(self, current_index, timeframe):
-        return TrendLineIndicator.get_next_swing_high(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_next_swing_high(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_next_swing_low(self, current_index, timeframe):
-        return TrendLineIndicator.get_next_swing_low(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_next_swing_low(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_prev_swing_swing_point(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_swing_swing_point(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_prev_swing_swing_point(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_next_swing_swing_point(self, current_index, timeframe):
-        return TrendLineIndicator.get_next_swing_swing_point(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_next_swing_swing_point(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_prev_trend_high(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_trend_high(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_swing_dir(self, timeframe: str, candle_index: int):
+        return self.get_candles(timeframe)[candle_index].get_indicator("swing_dir_" + self.ref_trend_type)
 
-    def get_prev_trend_low(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_trend_low(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_swing_price(self, timeframe: str, candle_index: int):
+        return self.get_candles(timeframe)[candle_index].get_indicator("swing_price_" + self.ref_trend_type)
 
-    def get_prev_trend_swing_point(self, current_index, timeframe):
-        return TrendLineIndicator.get_prev_trend_swing_point(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    # major swing
+    def get_prev_major_swing_high(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_major_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def get_next_trend_swing_point(self, current_index, timeframe):
-        return TrendLineIndicator.get_next_trend_swing_point(self.ref_trend_type, current_index, self.get_candles(timeframe))
+    def get_prev_major_swing_low(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_major_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
 
-    def find_high_and_low_between_candles(self, start, end, timeframe):
+    def get_next_major_swing_high(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_major_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+
+    def get_next_major_swing_low(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_major_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+
+    def get_prev_major_swing_point(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_prev_major_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+
+    def get_next_major_swing_point(self, timeframe: str, candle_index: int):
+        return TrendLineIndicator.get_next_major_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+
+    def get_major_swing_dir(self, timeframe: str, candle_index: int):
+        return self.get_candles(timeframe)[candle_index].get_indicator("major_swing_dir_" + self.ref_trend_type)
+
+    def get_major_swing_price(self, timeframe: str, candle_index: int):
+        return self.get_candles(timeframe)[candle_index].get_indicator("major_swing_price_" + self.ref_trend_type)
+
+    def find_high_and_low_between_candles(self, timeframe, start, end):
         low = 999999999999999
         high = -1
         for i in range(start, end + 1):

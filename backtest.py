@@ -28,9 +28,9 @@ if __name__ == "__main__":
                   FVGIndicator('zigzag_atr', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
 
     indicator_price_drawers = [
-        TrendLineZigZagAtrIndicatorDrawer('blue', 'red')
-        #, TrendLineZigZagIndicatorDrawer('blue', 'red')
-        #, TrendLineOnewayIndicatorDrawer('blue', 'red')
+        TrendLineZigZagAtrIndicatorDrawer('blue', 'red', 'red')
+        #, TrendLineZigZagIndicatorDrawer('blue', 'red', 'red')
+        #, TrendLineOnewayIndicatorDrawer('blue', 'red', 'red')
         #, MAIndicatorDrawer(period=5, color='magenta')
         #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')

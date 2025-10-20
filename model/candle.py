@@ -20,11 +20,11 @@ class Candle:
         return f"date={d}, o={self.open}, c={self.close}, l={self.low}, h={self.high}, v={self.volume}, inds={self.indicators}"
 
     # Set indicator value
-    def set_indicator(self, name: str, value: float):
+    def set_indicator(self, name: str, value):
         self.indicators[name] = value
 
     # Get indicator value
-    def get_indicator(self, name: str) -> float | None:
+    def get_indicator(self, name: str):
         return self.indicators.get(name)
 
     def is_bullish(self):

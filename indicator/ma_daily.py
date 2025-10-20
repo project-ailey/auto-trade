@@ -30,6 +30,9 @@ class MADailyIndicator(Indicator):
 
         # Pre-calculate the daily moving average.
         candles_1d = symbol.get_candles("1d")
+        if not candles_1d:
+            return
+
         timestamp_1d = [c.timestamp for c in candles_1d]
         closes_1d = [c.close for c in candles_1d]
         ma_values_1d = MAIndicator.calculate_moving_averages(self.mode, self.period, closes_1d)

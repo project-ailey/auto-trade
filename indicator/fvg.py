@@ -17,49 +17,54 @@ class FVGIndicator(Indicator):
         self.atr_multiplier = atr_multiplier
         self.ob_limit_on_trendline = ob_limit_on_trendline
 
-    def find_order_block(self, fvg_idx: int, candles: List[Candle]):
-        fvg_dir = TrendLineIndicator.UP if candles[fvg_idx].is_bullish() else TrendLineIndicator.DOWN
+    def find_order_block(self, symbol, timeframe: str, fvg_idx: int, candles: List[Candle]):
+        prev_swing = symbol.get_prev_major_swing_point(timeframe, fvg_idx)
+        if prev_swing == -1:
+            return (-1, -1)
 
-        prev_candle_idx = fvg_idx - 1
-        if fvg_dir == TrendLineIndicator.UP:
-            if candles[prev_candle_idx].is_bearish():
-                # If the candle right before FVG is bearish - order block
-                return (prev_candle_idx, prev_candle_idx)
+        prev_prev_swing = symbol.get_prev_major_swing_point(timeframe, prev_swing)
+        if prev_prev_swing == -1:
+            return (-1, -1)
+
+        prev_major_swing_dir = symbol.get_major_swing_dir(timeframe, prev_swing)
+        if prev_major_swing_dir == TrendLineIndicator.TOP:
+            # downtrend
+            start_index = -1
+            end_index = -1
+            for i in range(prev_swing, prev_prev_swing, -1):
+                if candles[i].is_bullish():
+                    # pick just one
+                    if end_index == -1:
+                        end_index = start_index = i
+                        break
+
+                else:
+                    if end_index != -1:
+                        break
+
+            if end_index != -1:
+                return (start_index, end_index)
             else:
-                # If the candle right before FVG is bullish - look for a bearish one
-                for i in range(prev_candle_idx - 1, -1, -1):
-                    if candles[i].is_bearish():
-                        start_idx = -1
-                        # If bearish, check for consecutive bearish candles
-                        # for j in range(i - 1, -1, -1):
-                        #     if candles[j].is_bullish():
-                        #         start_idx = j + 1
-                        #         break
-                        if start_idx == -1:
-                            return (i, i)
-                        else:
-                            return (start_idx, i)
+                return (-1, -1)
 
-        elif fvg_dir == TrendLineIndicator.DOWN:
-            if candles[prev_candle_idx].is_bullish():
-                # If the candle right before FVG is bullish - order block
-                return (prev_candle_idx, prev_candle_idx)
+        elif prev_major_swing_dir == TrendLineIndicator.BOTTOM:
+            # uptrend
+            start_index = -1
+            end_index = -1
+            for i in range(prev_swing, prev_prev_swing, -1):
+                if candles[i].is_bearish():
+                    # pick just one
+                    if end_index == -1:
+                        end_index = start_index = i
+                        break
+                else:
+                    if end_index != -1:
+                        break
+
+            if end_index != -1:
+                return (start_index, end_index)
             else:
-                # If the candle right before FVG is bearish - look for a bullish one
-                for i in range(prev_candle_idx - 1, -1, -1):
-                    if candles[i].is_bullish():
-                        start_idx = -1
-                        # If bullish, check for consecutive bullish candles
-                        # for j in range(i - 1, -1, -1):
-                        #     if candles[j].is_bearish():
-                        #         start_idx = j + 1
-                        #         break
-                        if start_idx == -1:
-                            return (i, i)
-                        else:
-                            return (start_idx, i)
-
-        return (-1, -1)
+                return (-1, -1)
 
     def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
         candles = symbol.get_candles(timeframe)
@@ -76,9 +81,9 @@ class FVGIndicator(Indicator):
             #     print ('test')
 
             new_item = None
-            prev_trend_point_idx = None
+            prev_trend_point_idx = -1
             if post.low > prev.high and center.is_bullish():    # Uptrend
-                prev_trend_point_idx = symbol.get_prev_trend_low(center_idx, timeframe)
+                prev_trend_point_idx = symbol.get_prev_major_swing_low(timeframe, center_idx)
                 if prev_trend_point_idx not in ob_limit_table:
                     ob_limit_table[prev_trend_point_idx] = 0
 
@@ -86,15 +91,15 @@ class FVGIndicator(Indicator):
                     new_item = {"start": center.timestamp, "low": prev.high, "high": post.low, "color": 'teal', "dir": TrendLineIndicator.UP, "index": center_idx}
 
                     # Find order block
-                    (start, end) = self.find_order_block(center_idx, candles)
+                    (start, end) = self.find_order_block(symbol, timeframe, center_idx, candles)
                     if start != -1 and end != -1:
-                        (low, high) = symbol.find_high_and_low_between_candles(start, end, timeframe)
+                        (low, high) = symbol.find_high_and_low_between_candles(timeframe, start, end)
 
                         new_item["order_block"] = {"high": high, "low": low, "color": '#003F3F', "start_index": start, "end_index": end}
 
 
             elif post.high < prev.low and center.is_bearish():  # Downtrend
-                prev_trend_point_idx = symbol.get_prev_trend_high(center_idx, timeframe)
+                prev_trend_point_idx = symbol.get_prev_major_swing_high(timeframe, center_idx)
                 if prev_trend_point_idx not in ob_limit_table:
                     ob_limit_table[prev_trend_point_idx] = 0
 
@@ -102,13 +107,13 @@ class FVGIndicator(Indicator):
                     new_item = {"start": center.timestamp, "low": post.high, "high": prev.low, "color": 'tomato', "dir": TrendLineIndicator.DOWN, "index": center_idx}
 
                     # Find order block
-                    (start, end) = self.find_order_block(center_idx, candles)
+                    (start, end) = self.find_order_block(symbol, timeframe, center_idx, candles)
                     if start != -1 and end != -1:
-                        (low, high) = symbol.find_high_and_low_between_candles(start, end, timeframe)
+                        (low, high) = symbol.find_high_and_low_between_candles(timeframe, start, end)
 
                         new_item["order_block"] = {"high": high, "low": low, "color": '#7A261F', "start_index": start, "end_index": end}
 
-            if new_item != None and prev_trend_point_idx != None:
+            if new_item != None and prev_trend_point_idx != -1:
                 atr_val = candles[center_idx].get_indicator('atr') or 0
                 if (new_item.get('high') - new_item.get('low')) >= atr_val * self.atr_multiplier:   # Filter only significant gaps
                     ob_limit_table[prev_trend_point_idx] += 1

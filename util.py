@@ -15,7 +15,7 @@ def fetch_candles(symbol, exchange: BaseExchange, timeframe: str, since: datetim
 
     candles = converter.to_candles(raw_data)
     if len(candles) > 0:
-        symbol.add_candles(timeframe, candles)
+        symbol.set_candles(timeframe, candles)
 
 def apply_indicators(symbol, timeframe, indicators: List[Indicator]):
     for indicator in indicators:

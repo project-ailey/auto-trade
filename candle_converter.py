@@ -5,7 +5,7 @@ from model.candle import Candle
 class CandleConverter:
 
     # Convert standardized dictionary data into a list of Candle objects
-    def to_candles(self, data: List[Dict[str, float]]) -> List[Candle]:
+    def to_candles(self, data: List[Dict[str, any]]) -> List[Candle]:
         candles = []
         for entry in data:
             candle = Candle(
