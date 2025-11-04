@@ -6,7 +6,7 @@ from exchange.crypto_binance import CryptoBinanceExchange
 from exchange.util import find_regular_market_candle_time_after, find_regular_market_candle_time_before, \
     timeframe_to_minutes
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
-from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
+from indicator.fvg_old import FVGOldIndicator, FVGOldIndicatorDrawer
 
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
 from indicator.ma import MAIndicatorDrawer, MAIndicator
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(1.1),  #TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
                   MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
-                  FVGIndicator('zigzag_atr', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
+                  FVGOldIndicator('zigzag_atr', atr_multiplier=0.1, ob_limit_on_trendline=3)] # FVG must come after ATR
 
     indicator_price_drawers = [
         TrendLineZigZagAtrIndicatorDrawer('blue', 'red', 'red')
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         #, MAIndicatorDrawer(period=20, color='orange')
         , MAIndicatorDrawer(period=50, color='teal')
         , MAIndicatorDrawer(period=200, color='black')
-        , FVGIndicatorDrawer(True, True)
+        , FVGOldIndicatorDrawer(True, True)
     ]
 
     indicator_drawers = [

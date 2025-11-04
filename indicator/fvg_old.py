@@ -9,7 +9,8 @@ from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
 from model.symbol import Symbol
 
-class FVGIndicator(Indicator):
+
+class FVGOldIndicator(Indicator):
     def __init__(self, ref_trend_type: str, atr_multiplier: float = 1.0, ob_limit_on_trendline: int = 3) -> None:
         super().__init__(name="fvg")
 
@@ -160,8 +161,7 @@ class FVGIndicator(Indicator):
                 for i in range(ob_start_idx + 1, ob_end_idx + 1):
                     candles[i].set_indicator('fvg_ob_candle', {})   # Added for convenience for drawer
 
-
-class FVGIndicatorDrawer(IndicatorDrawer):
+class FVGOldIndicatorDrawer(IndicatorDrawer):
     def __init__(self, is_draw_fvg = True, is_draw_ob = True) -> None:
         super().__init__(name="fvg", color=None)
 

@@ -8,7 +8,7 @@ from indicator.trendline_zigzag import TrendLineZigZagIndicatorDrawer, TrendLine
 from model.candle import Candle
 from exchange.crypto_binance import CryptoBinanceExchange
 from indicator.atr import ATRIndicatorDrawer, ATRIndicator
-from indicator.fvg import FVGIndicator, FVGIndicatorDrawer
+from indicator.fvg_old import FVGOldIndicator, FVGOldIndicatorDrawer
  
 from indicator.indicator_drawer import IndicatorDrawer
 from indicator.rsi import RSIIndicator, RSIIndicatorDrawer
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),  #TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
                   MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
                   MADailyIndicator(period=10, mode=mode_ma), MADailyIndicator(period=20, mode=mode_ma),
-                  #FVGIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)
+                  FVGOldIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)
                   ] # FVG must come after ATR
     
     indicator_price_drawers = [
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         , MAIndicatorDrawer(period=200, color='black')
         , MADailyIndicatorDrawer(period=10, color='deepskyblue')
         , MADailyIndicatorDrawer(period=20, color='orange')
-        , FVGIndicatorDrawer(False, False)
+        , FVGOldIndicatorDrawer(False, False)
     ]
 
     indicator_drawers = [
