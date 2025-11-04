@@ -1,4 +1,6 @@
 from typing import List
+
+from indicator.trendline_const import TrendDir
 from model.candle import Candle
 
 from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawer
@@ -10,7 +12,9 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
 
         self.zigzag_deviation_percent = zigzag_deviation_percent
 
-    def calculate_swing_lines(self, candles: List[Candle]) -> None:
+    def calculate_swing_lines(self, symbol, timeframe) -> None:
+        candles: List[Candle] = symbol.get_candles(timeframe)
+
         if len(candles) < 2:
             return
 
@@ -33,15 +37,15 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
             if swing_dir is None:  # determine initial trend
                 # decide whether it breaks upward or downward first
                 if (current_price_high - last_pivot_price) / last_pivot_price * 100 >= self.zigzag_deviation_percent:
-                    swing_dir = TrendLineIndicator.UP
+                    swing_dir = TrendDir.UP
                     candidate_pivot_price = current_price_high
                     candidate_pivot_idx = i
                 elif (last_pivot_price - current_price_low) / last_pivot_price * 100 >= self.zigzag_deviation_percent:
-                    swing_dir = TrendLineIndicator.DOWN
+                    swing_dir = TrendDir.DOWN
                     candidate_pivot_price = current_price_low
                     candidate_pivot_idx = i
 
-            elif swing_dir == TrendLineIndicator.UP:  # uptrend (looking for peak)
+            elif swing_dir == TrendDir.UP:  # uptrend (looking for peak)
                 if current_price_high > candidate_pivot_price:
                     # found a higher high, update candidate
                     candidate_pivot_price = current_price_high
@@ -51,13 +55,13 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
                     retrace_pct = (candidate_pivot_price - current_price_low) / candidate_pivot_price * 100
                     if retrace_pct >= self.zigzag_deviation_percent:
                         # confirm peak
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.TOP))
-                        swing_dir = TrendLineIndicator.DOWN  # switch trend
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.TOP))
+                        swing_dir = TrendDir.DOWN  # switch trend
                         last_pivot_price = candidate_pivot_price
                         candidate_pivot_price = current_price_low  # new low candidate
                         candidate_pivot_idx = i
 
-            elif swing_dir == TrendLineIndicator.DOWN:  # downtrend (looking for bottom)
+            elif swing_dir == TrendDir.DOWN:  # downtrend (looking for bottom)
                 if current_price_low < candidate_pivot_price:
                     # found a lower low, update candidate
                     candidate_pivot_price = current_price_low
@@ -67,8 +71,8 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
                     retrace_pct = (current_price_high - candidate_pivot_price) / candidate_pivot_price * 100
                     if retrace_pct >= self.zigzag_deviation_percent:
                         # confirm bottom
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.BOTTOM))
-                        swing_dir = TrendLineIndicator.UP  # switch trend
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.BOTTOM))
+                        swing_dir = TrendDir.UP  # switch trend
                         last_pivot_price = candidate_pivot_price
                         candidate_pivot_price = current_price_high  # new high candidate
                         candidate_pivot_idx = i
@@ -77,11 +81,11 @@ class TrendLineZigZagIndicator(TrendLineIndicator):
         last_offset = 0
         for idx, price, t_dir in pivots:
             for i in range(last_offset, idx):
-                self.set_swing_dir(candles[i], TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+                candles[i].set_swing_dir(self.trend_type, TrendDir.UP if t_dir == TrendDir.TOP else TrendDir.DOWN)
             last_offset = idx + 1
 
-            self.set_swing_price(candles[idx], price)
-            self.set_swing_dir(candles[idx], t_dir)
+            candles[idx].set_swing_price(self.trend_type, price)
+            candles[idx].set_swing_dir(self.trend_type, t_dir)
 
 class TrendLineZigZagIndicatorDrawer(TrendLineIndicatorDrawer):
     def __init__(self, swing_color: str, major_swing_color: str, trend_color: str):

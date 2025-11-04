@@ -2,6 +2,7 @@ from typing import List
 
 from matplotlib.axes import Axes
 
+from indicator.trendline_const import TrendDir
 from indicator.util import find_most_low, find_most_high
 from model.candle import Candle
 from indicator.indicator import Indicator
@@ -9,329 +10,212 @@ from indicator.indicator_drawer import IndicatorDrawer
 
 
 class TrendLineIndicator(Indicator):
-    NONE = 0
-    UP = 1
-    DOWN = 2
-    TOP = 3
-    BOTTOM = 4
-    ENGULFED_IN_UP = 5,
-    ENGULFED_IN_DOWN = 6,
-
     def __init__(self, trend_type: str, trend_atr_multiplier: float):
         super().__init__(name="trendline_" + trend_type)
         self.trend_type = trend_type
         self.trendline_atr_multiplier = trend_atr_multiplier
 
-    # swing
-    @staticmethod
-    def get_prev_swing_high(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.TOP):
-                return i
-        return -1
-
-    @staticmethod
-    def get_prev_swing_low(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_swing_high(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.TOP):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_swing_low(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_prev_swing_point(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.TOP) or (
-                    c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_swing_point(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.TOP) or (
-                    c.get_indicator('swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    # major swing
-    @staticmethod
-    def get_prev_major_swing_high(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.TOP):
-                return i
-        return -1
-
-    @staticmethod
-    def get_prev_major_swing_low(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_major_swing_high(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.TOP):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_major_swing_low(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_prev_major_swing_point(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index - 1, -1, -1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.TOP) or (
-                    c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    @staticmethod
-    def get_next_major_swing_point(trend_type, current_index, candles: List[Candle]):
-        for i in range(current_index + 1, len(candles), 1):
-            c = candles[i]
-            if (c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.TOP) or (
-                    c.get_indicator('major_swing_dir_' + trend_type) == TrendLineIndicator.BOTTOM):
-                return i
-        return -1
-
-    # swing
-    def set_swing_dir(self, candle, value):
-        candle.set_indicator("swing_dir_" + self.trend_type, value)
-
-    def get_swing_dir(self, candle):
-        return candle.get_indicator("swing_dir_" + self.trend_type)
-
-    def set_swing_price(self, candle, value):
-        candle.set_indicator("swing_price_" + self.trend_type, value)
-
-    def get_swing_price(self, candle):
-        return candle.get_indicator("swing_price_" + self.trend_type)
-
-    # major swing
-    def set_major_swing_dir(self, candle, value):
-        candle.set_indicator("major_swing_dir_" + self.trend_type, value)
-
-    def get_major_swing_dir(self, candle):
-        return candle.get_indicator("major_swing_dir_" + self.trend_type)
-
-    def set_major_swing_price(self, candle, value):
-        candle.set_indicator("major_swing_price_" + self.trend_type, value)
-
-    def get_major_swing_price(self, candle):
-        return candle.get_indicator("major_swing_price_" + self.trend_type)
-
-    # trend
-    def set_trend_dir(self, candle, value):
-        candle.set_indicator("trend_dir_" + self.trend_type, value)
-
-    def get_trend_dir(self, candle):
-        return candle.get_indicator("trend_dir_" + self.trend_type)
-
-    def set_trend_price(self, candle, value):
-        candle.set_indicator("trend_price_" + self.trend_type, value)
-
-    def get_trend_price(self, candle):
-        return candle.get_indicator("trend_price_" + self.trend_type)
-
-    # bos, choch
-    def set_major_bos(self, candle, value):
-        candle.set_indicator("major_bos_" + self.trend_type, value)
-
-    def get_major_bos(self, candle):
-        return candle.get_indicator("major_bos_" + self.trend_type)
-
-    def set_major_choch(self, candle, value):
-        candle.set_indicator("major_choch_" + self.trend_type, value)
-
-    def get_major_choch(self, candle):
-        return candle.get_indicator("major_choch_" + self.trend_type)
-
     def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        candles = symbol.get_candles(timeframe)
+        self.calculate_swing_lines(symbol, timeframe)
+        self.calculate_major_swing_lines(symbol, timeframe)
 
-        if len(candles) == 0:
-            return
-
-        self.calculate_swing_lines(candles)
-        self.calculate_major_swing_lines(candles)
-
-    def calculate_swing_lines(self, candles: List[Candle]) -> None:
+    def calculate_swing_lines(self, symbol, timeframe) -> None:
+        # Defined in the subclass; major swing lines are handled based on this result.
         pass
 
-    def calculate_major_swing_lines(self, candles: List[Candle]) -> None:
-        next_index = TrendLineIndicator.get_next_swing_point(self.trend_type, 0, candles)
+    def calculate_major_swing_lines(self, symbol, timeframe) -> None:
+        candles: List[Candle] = symbol.get_candles(timeframe)
+
+        next_swing_point = symbol.get_next_swing_point(timeframe, self.trend_type, 0)
 
         pivots = []
         trend_pivots = []
 
-        if next_index != -1:
-            if self.get_swing_dir(candles[next_index]) == TrendLineIndicator.TOP:
-                base_start_index = next_index
-                base_end_index = TrendLineIndicator.get_next_swing_low(self.trend_type, next_index, candles)
-                check_index = base_end_index
-                curr_trend = TrendLineIndicator.DOWN
+        if next_swing_point != None:
+            if next_swing_point.get_swing_dir(self.trend_type) == TrendDir.TOP:
+                base_start_index = next_swing_point.index
 
-                pivots.append((base_start_index, candles[base_start_index].high, TrendLineIndicator.TOP))
-                pivots.append((base_end_index, candles[base_end_index].low, TrendLineIndicator.BOTTOM))
+                next_swing_low = symbol.get_next_swing_low(timeframe, self.trend_type, next_swing_point.index)
+                base_end_index = next_swing_low.index
+                check_index = base_end_index
+                curr_trend = TrendDir.DOWN
+
+                pivots.append((base_start_index, candles[base_start_index].high, TrendDir.TOP))
+                pivots.append((base_end_index, candles[base_end_index].low, TrendDir.BOTTOM))
 
             else:
-                base_start_index = next_index
-                base_end_index = TrendLineIndicator.get_next_swing_high(self.trend_type, next_index, candles)
+                base_start_index = next_swing_point.index
+
+                next_swing_high = symbol.get_next_swing_high(timeframe, self.trend_type, next_swing_point.index)
+                base_end_index = next_swing_high.index
                 check_index = base_end_index
-                curr_trend = TrendLineIndicator.UP
+                curr_trend = TrendDir.UP
 
-                pivots.append((base_start_index, candles[base_start_index].low, TrendLineIndicator.BOTTOM))
-                pivots.append((base_end_index, candles[base_end_index].low, TrendLineIndicator.TOP))
+                pivots.append((base_start_index, candles[base_start_index].low, TrendDir.BOTTOM))
+                pivots.append((base_end_index, candles[base_end_index].low, TrendDir.TOP))
 
+            last_found_choch_index = -1
             while True:
-                if curr_trend == TrendLineIndicator.UP:
-                    next_low = TrendLineIndicator.get_next_swing_low(self.trend_type, check_index, candles)
-                    next_high = TrendLineIndicator.get_next_swing_high(self.trend_type, check_index, candles)
+                if curr_trend == TrendDir.UP:
+                    next_low = symbol.get_next_swing_low(timeframe, self.trend_type, check_index)
+                    next_high = symbol.get_next_swing_high(timeframe, self.trend_type, check_index)
 
-                    if next_low == -1:
+                    if next_low == None:
                         break   # Reached the end, then break
 
-                    if next_low != -1 and candles[base_start_index].low > candles[next_low].low:
+                    if next_low != None and candles[base_start_index].low > next_low.low:
                         # Switch to downtrend
-                        pivots.append((next_low, candles[next_low].low, TrendLineIndicator.BOTTOM))
+                        pivots.append((next_low.index, next_low.low, TrendDir.BOTTOM))
 
-                        trend_pivots.append((base_end_index, candles[base_end_index].high, TrendLineIndicator.TOP))
+                        trend_pivots.append((base_end_index, candles[base_end_index].high, TrendDir.TOP))
 
                         # calculate choch
-                        for i in range(check_index, next_low + 1):
-                            prev_bottom = pivots[len(pivots) - 3][0]    # -1 is the newly added breakout swing point, -2 is the previous high, -3 is the previous low
+                        found_choch = False
+                        prev_bottom = pivots[len(pivots) - 3][0]  # -1 is the newly added breakout swing point, -2 is the previous high, -3 is the previous low
+                        for i in range(check_index, next_low.index + 1):
                             if candles[prev_bottom].low > candles[i].close:
-                                self.set_major_choch(candles[i], {'base_swing_point': prev_bottom, 'price': candles[prev_bottom].low, 'dir': TrendLineIndicator.DOWN})
+                                candles[i].set_major_choch(self.trend_type, {'base_swing_point': prev_bottom, 'price': candles[prev_bottom].low, 'dir': TrendDir.DOWN})
+                                candles[prev_bottom].set_major_choch_by(self.trend_type, {'by': i})
+                                found_choch = True
                                 break
+
+                        if found_choch == False:
+                            last_found_choch_index = prev_bottom    # Check during consecutive down swings.
+                        else:
+                            last_found_choch_index = -1
 
                         base_start_index = base_end_index
-                        base_end_index = next_low
-                        curr_trend = TrendLineIndicator.DOWN
+                        base_end_index = next_low.index
+                        curr_trend = TrendDir.DOWN
 
-                        check_index = next_low
+                        check_index = next_low.index
 
-                    elif next_high != -1 and candles[base_end_index].high < candles[next_high].high:
+                    elif next_high != None and candles[base_end_index].high < next_high.high:
                         # Switch to uptrend
-                        most_low_index = find_most_low(candles, base_end_index + 1, next_high - 1)
+                        most_low_index = find_most_low(candles, base_end_index + 1, next_high.index - 1)
 
-                        pivots.append((most_low_index, candles[most_low_index].low, TrendLineIndicator.BOTTOM))
-                        pivots.append((next_high, candles[next_high].high, TrendLineIndicator.TOP))
+                        pivots.append((most_low_index, candles[most_low_index].low, TrendDir.BOTTOM))
+                        pivots.append((next_high.index, next_high.high, TrendDir.TOP))
 
                         # calculate bos
-                        for i in range(next_low, next_high + 1):
+                        for i in range(next_low.index, next_high.index + 1):
                             if candles[base_end_index].high < candles[i].high:
-                                self.set_major_bos(candles[i], {'base_swing_point': base_end_index, 'price': candles[base_end_index].high, 'dir': TrendLineIndicator.UP})
+                                candles[i].set_major_bos(self.trend_type, {'base_swing_point': base_end_index, 'price': candles[base_end_index].high, 'dir': TrendDir.UP})
                                 break
 
-                        base_start_index = next_low
-                        base_end_index = next_high
+                        # calculate choch (If no CHoCH detected when turning to uptrend)
+                        if last_found_choch_index != -1:
+                            found_choch = False
+                            for i in range(base_end_index, next_high.index + 1):
+                                if candles[last_found_choch_index].high < candles[i].close:
+                                    candles[i].set_major_choch(self.trend_type, {'base_swing_point': last_found_choch_index, 'price': candles[last_found_choch_index].high, 'dir': TrendDir.UP})
+                                    candles[last_found_choch_index].set_major_choch_by(self.trend_type, {'by': i})
+                                    found_choch = True
+                                    break
+
+                            if found_choch == True:
+                                last_found_choch_index = -1
+
+                        base_start_index = next_low.index
+                        base_end_index = next_high.index
 
                         check_index = base_end_index
 
                     else:
-                        if next_high == -1:
+                        if next_high == None:
                             break
                         else:
-                            check_index = next_high # ENGULFED
+                            check_index = next_high.index # ENGULFED
 
-                elif curr_trend == TrendLineIndicator.DOWN:
-                    next_high = TrendLineIndicator.get_next_swing_high(self.trend_type, check_index, candles)
-                    next_low = TrendLineIndicator.get_next_swing_low(self.trend_type, check_index, candles)
+                elif curr_trend == TrendDir.DOWN:
+                    next_high = symbol.get_next_swing_high(timeframe, self.trend_type, check_index)
+                    next_low = symbol.get_next_swing_low(timeframe, self.trend_type, check_index)
 
-                    if next_high == -1:
+                    if next_high == None:
                         break   # Reached the end, then break
 
-                    if next_high != -1 and candles[base_start_index].high < candles[next_high].high:
+                    if next_high != None and candles[base_start_index].high < next_high.high:
                         # Switch to uptrend
-                        pivots.append((next_high, candles[next_high].high, TrendLineIndicator.TOP))
+                        pivots.append((next_high.index, next_high.high, TrendDir.TOP))
 
-                        trend_pivots.append((base_end_index, candles[base_end_index].low, TrendLineIndicator.BOTTOM))
+                        trend_pivots.append((base_end_index, candles[base_end_index].low, TrendDir.BOTTOM))
 
                         # calculate choch
-                        for i in range(check_index, next_high + 1):
-                            prev_top = pivots[len(pivots) - 3][0]   # -1 is the newly added breakout swing point, -2 is the previous high, -3 is the previous low
+                        found_choch = False
+                        prev_top = pivots[len(pivots) - 3][0]  # -1 is the newly added breakout swing point, -2 is the previous high, -3 is the previous low
+                        for i in range(check_index, next_high.index + 1):
                             if candles[prev_top].high < candles[i].close:
-                                self.set_major_choch(candles[i], {'base_swing_point': prev_top, 'price': candles[prev_top].high, 'dir': TrendLineIndicator.UP})
+                                candles[i].set_major_choch(self.trend_type, {'base_swing_point': prev_top, 'price': candles[prev_top].high, 'dir': TrendDir.UP})
+                                candles[prev_top].set_major_choch_by(self.trend_type, {'by': i})
+                                found_choch = True
                                 break
 
+                        if found_choch == False:
+                            last_found_choch_index = prev_top   # Check during consecutive up swings.
+                        else:
+                            last_found_choch_index = -1
+
                         base_start_index = base_end_index
-                        base_end_index = next_high
-                        curr_trend = TrendLineIndicator.UP
+                        base_end_index = next_high.index
+                        curr_trend = TrendDir.UP
 
                         check_index = base_end_index
 
-                    elif next_low != -1 and candles[base_end_index].low > candles[next_low].low:
+                    elif next_low != None and candles[base_end_index].low > next_low.low:
                         # Maintain downtrend
-                        most_high_index = find_most_high(candles, base_end_index + 1, next_low - 1)
+                        most_high_index = find_most_high(candles, base_end_index + 1, next_low.index - 1)
 
-                        pivots.append((most_high_index, candles[most_high_index].high, TrendLineIndicator.TOP))
-                        pivots.append((next_low, candles[next_low].low, TrendLineIndicator.BOTTOM))
+                        pivots.append((most_high_index, candles[most_high_index].high, TrendDir.TOP))
+                        pivots.append((next_low.index, next_low.low, TrendDir.BOTTOM))
 
                         # calculate bos
-                        for i in range(next_high, next_low + 1):
+                        for i in range(next_high.index, next_low.index + 1):
                             if candles[base_end_index].low > candles[i].low:
-                                self.set_major_bos(candles[i], {'base_swing_point': base_end_index, 'price': candles[base_end_index].low, 'dir': TrendLineIndicator.DOWN})
+                                candles[i].set_major_bos(self.trend_type, {'base_swing_point': base_end_index, 'price': candles[base_end_index].low, 'dir': TrendDir.DOWN})
                                 break
 
-                        base_start_index = next_high
-                        base_end_index = next_low
+                        # calculate choch (When switching to downtrend, if no CHoCH is detected)
+                        if last_found_choch_index != -1:
+                            found_choch = False
+                            for i in range(check_index, next_low.index + 1):
+                                if candles[last_found_choch_index].low > candles[i].close:
+                                    candles[i].set_major_choch(self.trend_type, {'base_swing_point': last_found_choch_index, 'price': candles[last_found_choch_index].low, 'dir': TrendDir.DOWN})
+                                    candles[last_found_choch_index].set_major_choch_by(self.trend_type, {'by': i})
+                                    found_choch = True
+                                    break
+
+                            if found_choch == True:
+                                last_found_choch_index = -1
+
+                        base_start_index = next_high.index
+                        base_end_index = next_low.index
 
                         check_index = base_end_index
 
                     else:
-                        if next_low == -1:
+                        if next_low == None:
                             break
                         else:
-                            check_index = next_low # ENGULFED
+                            check_index = next_low.index # ENGULFED
 
             ## Apply candle directions between TOP and BOTTOM
             last_offset = 0
             for idx, price, t_dir in pivots:
                 for i in range(last_offset, idx):
-                    self.set_major_swing_dir(candles[i], TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+                    candles[i].set_major_swing_dir(self.trend_type, TrendDir.UP if t_dir == TrendDir.TOP else TrendDir.DOWN)
                 last_offset = idx + 1
 
-                self.set_major_swing_dir(candles[idx], t_dir)
-                self.set_major_swing_price(candles[idx], price)
+                candles[idx].set_major_swing_dir(self.trend_type, t_dir)
+                candles[idx].set_major_swing_price(self.trend_type, price)
 
             last_offset = 0
             for idx, price, t_dir in trend_pivots:
                 for i in range(last_offset, idx):
-                    self.set_trend_dir(candles[i], TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+                    candles[i].set_trend_dir(self.trend_type, TrendDir.UP if t_dir == TrendDir.TOP else TrendDir.DOWN)
                 last_offset = idx + 1
 
-                self.set_trend_dir(candles[idx], t_dir)
-                self.set_trend_price(candles[idx], price)
+                candles[idx].set_trend_dir(self.trend_type, t_dir)
+                candles[idx].set_trend_price(self.trend_type, price)
 
 class TrendLineIndicatorDrawer(IndicatorDrawer):
     def __init__(self, trend_type: str, swing_color: str, major_swing_color: str, trend_color: str):
@@ -340,25 +224,10 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
         self.swing_color = swing_color
         self.major_swing_color = major_swing_color
 
-    def get_swing_price(self, candle):
-        return candle.get_indicator("swing_price_" + self.trend_type)
-
-    def get_major_swing_price(self, candle):
-        return candle.get_indicator("major_swing_price_" + self.trend_type)
-
-    def get_trend_price(self, candle):
-        return candle.get_indicator("trend_price_" + self.trend_type)
-
     # bos, choch
-    def get_major_bos(self, candle):
-        return candle.get_indicator("major_bos_" + self.trend_type)
-
-    def get_major_choch(self, candle):
-        return candle.get_indicator("major_choch_" + self.trend_type)
-
     def draw_swing(self, target_plot: Axes, indexes: List[int], candles: List[Candle]):
         if self.swing_color != None:
-            swing_prices = [self.get_swing_price(c) for c in candles]
+            swing_prices = [c.get_swing_price(self.trend_type) for c in candles]
             swing_points = []
             for i in range(0, len(candles)):
                 if swing_prices[i]:
@@ -371,7 +240,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
 
     def draw_major_swing(self, target_plot: Axes, indexes: List[int], candles: List[Candle]):
         if self.major_swing_color != None:
-            major_swing_prices = [self.get_major_swing_price(c) for c in candles]
+            major_swing_prices = [c.get_major_swing_price(self.trend_type) for c in candles]
             major_swing_points = []
             for i in range(0, len(candles)):
                 if major_swing_prices[i]:
@@ -384,7 +253,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
 
     def draw_trend(self, target_plot: Axes, indexes: List[int], candles: List[Candle]):
         if self.color != None:
-            trend_prices = [self.get_trend_price(c) for c in candles]
+            trend_prices = [c.get_trend_price(self.trend_type) for c in candles]
             trend_points = []
             for i in range(0, len(candles)):
                 if trend_prices[i]:
@@ -396,7 +265,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
                                  label='Trend Line ' + self.trend_type)
 
     def draw_major_boses(self, target_plot: Axes, indexes: List[int], candles: List[Candle]):
-        bos_infos = [self.get_major_bos(c) for c in candles]
+        bos_infos = [c.get_major_bos(self.trend_type) for c in candles]
         for i in range(len(bos_infos)):
             if bos_infos[i] == None:
                 continue
@@ -406,7 +275,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
             direction = bos_infos[i]['dir']
 
             # The price of the base candle (choose low/high depending on direction)
-            if direction == TrendLineIndicator.DOWN:
+            if direction == TrendDir.DOWN:
                 base_price = candles[base_idx].low
             else:
                 base_price = candles[base_idx].high
@@ -417,7 +286,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
             target_plot.plot(x_vals, y_vals, color='black', linestyle='--', linewidth=1)
 
     def draw_major_choches(self, target_plot: Axes, indexes: List[int], candles: List[Candle]):
-        bos_infos = [self.get_major_choch(c) for c in candles]
+        bos_infos = [c.get_major_choch(self.trend_type) for c in candles]
         for i in range(len(bos_infos)):
             if bos_infos[i] == None:
                 continue
@@ -427,7 +296,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
             direction = bos_infos[i]['dir']
 
             # The price of the base candle (choose low/high depending on direction)
-            if direction == TrendLineIndicator.DOWN:
+            if direction == TrendDir.DOWN:
                 base_price = candles[base_idx].low
             else:
                 base_price = candles[base_idx].high

@@ -3,6 +3,7 @@ from typing import List
 import matplotlib.pyplot as plt
 
 from indicator.ma_daily import MADailyIndicator, MADailyIndicatorDrawer
+from indicator.pdarray import PDArrayIndicator, PDArrayIndicatorDrawer
 from indicator.trendline_oneway import TrendLineOnewayIndicatorDrawer, TrendLineOnewayIndicator
 from indicator.trendline_zigzag import TrendLineZigZagIndicatorDrawer, TrendLineZigZagIndicator
 from model.candle import Candle
@@ -101,46 +102,49 @@ def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[Indicator
 if __name__ == "__main__":
     mode_ma = 'sma'
     mode_atr = 'sma'
-
-    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),  #TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
-                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma), MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
-                  MADailyIndicator(period=10, mode=mode_ma), MADailyIndicator(period=20, mode=mode_ma),
-                  FVGOldIndicator('zigzag_atr', atr_multiplier=0.3, ob_limit_on_trendline=3)
-                  ] # FVG must come after ATR
-    
-    indicator_price_drawers = [
-        TrendLineZigZagAtrIndicatorDrawer('blue', 'red', None)
-        #, TrendLineZigZagIndicatorDrawer('blue', 'red', 'magenta')
-        #, TrendLineOnewayIndicatorDrawer('blue', 'red', 'magenta')
-        #, MAIndicatorDrawer(period=5, color='magenta')
-        #, MAIndicatorDrawer(period=20, color='orange')
-        , MAIndicatorDrawer(period=50, color='teal')
-        , MAIndicatorDrawer(period=200, color='black')
-        , MADailyIndicatorDrawer(period=10, color='deepskyblue')
-        , MADailyIndicatorDrawer(period=20, color='orange')
-        , FVGOldIndicatorDrawer(False, False)
-    ]
-
-    indicator_drawers = [
-        VolumeIndicatorDrawer(),
-        #RSIIndicatorDrawer(),
-        #ATRIndicatorDrawer(),
-    ]
+    main_trend_type = "zigzag_atr"
 
     is_draw_candle = True
     is_draw_candle_index = False
 
-    ticker = "BTC/USDT"
-    excd = None
-
     days_1d = 500
 
     timeframe = "1d"
-    days = 100
-
+    ticker = "BTC/USDT"
+    days = 120
+    excd = None
     exchange = CryptoBinanceExchange()
 
-    symbol = Symbol(ticker, excd, 'zigzag_atr')
+    indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),
+                  # TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
+                  MAIndicator(period=5, mode=mode_ma), MAIndicator(period=20, mode=mode_ma),
+                  MAIndicator(period=50, mode=mode_ma), MAIndicator(period=200, mode=mode_ma),
+                  MADailyIndicator(period=10, mode=mode_ma), MADailyIndicator(period=20, mode=mode_ma),
+                  # FVGOldIndicator(main_trend_type, atr_multiplier=0.3, ob_limit_on_trendline=3),
+                  PDArrayIndicator(main_trend_type, atr_multiplier=0.3, ob_limit_on_trendline=3),
+                  ]  # FVG must come after ATR
+
+    indicator_price_drawers = [
+        TrendLineZigZagAtrIndicatorDrawer(None, 'red', None)
+        # , TrendLineZigZagIndicatorDrawer('blue', 'red', None)
+        # , TrendLineOnewayIndicatorDrawer('blue', 'red', 'magenta')
+        # , MAIndicatorDrawer(period=5, color='magenta')
+        # , MAIndicatorDrawer(period=20, color='orange')
+        , MAIndicatorDrawer(period=50, color='teal')
+        , MAIndicatorDrawer(period=200, color='black')
+        , MADailyIndicatorDrawer(period=10, color='deepskyblue')
+        , MADailyIndicatorDrawer(period=20, color='orange')
+        # , FVGOldIndicatorDrawer(False, True)
+        , PDArrayIndicatorDrawer(False, True)
+    ]
+
+    indicator_drawers = [
+        VolumeIndicatorDrawer(),
+        # RSIIndicatorDrawer(),
+        # ATRIndicatorDrawer(),
+    ]
+
+    symbol = Symbol(ticker, excd)
     fetch_candles(symbol, exchange, "1d", datetime.now() - timedelta(days=days_1d))
     if indicators != None and len(indicators) > 0:
         apply_indicators(symbol, "1d", indicators)

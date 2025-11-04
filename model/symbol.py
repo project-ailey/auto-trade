@@ -1,15 +1,14 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
-from indicator.trendline_base import TrendLineIndicator
+from indicator.trendline_const import TrendDir
 from model.candle import Candle
 
 
 class Symbol:
-    def __init__(self, ticker: str, excd: str, ref_trend_type: str = "zigzag_atr"):
+    def __init__(self, ticker: str, excd: str):
         self.ticker = ticker
         self.excd = excd
-        self.ref_trend_type = ref_trend_type
         self.candle_list: Dict[str, List[Candle]] = {}
         self.candle_table: Dict[str, Dict[int, tuple[Candle, int]]] = {}
 
@@ -42,54 +41,102 @@ class Symbol:
             return -1
 
     # swing
-    def get_prev_swing_high(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_swing_high(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if c.get_swing_dir(trend_type) == TrendDir.TOP:
+                return c
+        return candles[0] if offset_index > 0 and len(candles) > 0 else None
 
-    def get_prev_swing_low(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_swing_low(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if c.get_swing_dir(trend_type) == TrendDir.BOTTOM:
+                return c
+        return candles[0] if offset_index > 0 and len(candles) > 0 else None
 
-    def get_next_swing_high(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_next_swing_high(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if c.get_swing_dir(trend_type) == TrendDir.TOP:
+                return c
+        return None
 
-    def get_next_swing_low(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_next_swing_low(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if c.get_swing_dir(trend_type) == TrendDir.BOTTOM:
+                return c
+        return None
 
-    def get_prev_swing_swing_point(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_swing_swing_point(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_swing_dir(trend_type) == TrendDir.TOP) or (c.get_swing_dir(trend_type) == TrendDir.BOTTOM):
+                return c
+        return None
 
-    def get_next_swing_swing_point(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
-
-    def get_swing_dir(self, timeframe: str, candle_index: int):
-        return self.get_candles(timeframe)[candle_index].get_indicator("swing_dir_" + self.ref_trend_type)
-
-    def get_swing_price(self, timeframe: str, candle_index: int):
-        return self.get_candles(timeframe)[candle_index].get_indicator("swing_price_" + self.ref_trend_type)
+    def get_next_swing_point(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if (c.get_swing_dir(trend_type) == TrendDir.TOP) or (c.get_swing_dir(trend_type) == TrendDir.BOTTOM):
+                return c
+        return None
 
     # major swing
-    def get_prev_major_swing_high(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_major_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_major_swing_high(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if c.get_major_swing_dir(trend_type) == TrendDir.TOP:
+                return c
+        return candles[0] if offset_index > 0 and len(candles) > 0 else None
 
-    def get_prev_major_swing_low(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_major_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_major_swing_low(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if c.get_major_swing_dir(trend_type) == TrendDir.BOTTOM:
+                return c
+        return candles[0] if offset_index > 0 and len(candles) > 0 else None
 
-    def get_next_major_swing_high(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_major_swing_high(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_next_major_swing_high(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if c.get_major_swing_dir(trend_type) == TrendDir.TOP:
+                return c
+        return None
 
-    def get_next_major_swing_low(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_major_swing_low(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_next_major_swing_low(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if c.get_major_swing_dir(trend_type) == TrendDir.BOTTOM:
+                return c
+        return None
 
-    def get_prev_major_swing_point(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_prev_major_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
+    def get_prev_major_swing_point(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index - 1, -1, -1):
+            c = candles[i]
+            if (c.get_major_swing_dir(trend_type) == TrendDir.TOP) or (c.get_major_swing_dir(trend_type) == TrendDir.BOTTOM):
+                return c
+        return None
 
-    def get_next_major_swing_point(self, timeframe: str, candle_index: int):
-        return TrendLineIndicator.get_next_major_swing_point(self.ref_trend_type, candle_index, self.get_candles(timeframe))
-
-    def get_major_swing_dir(self, timeframe: str, candle_index: int):
-        return self.get_candles(timeframe)[candle_index].get_indicator("major_swing_dir_" + self.ref_trend_type)
-
-    def get_major_swing_price(self, timeframe: str, candle_index: int):
-        return self.get_candles(timeframe)[candle_index].get_indicator("major_swing_price_" + self.ref_trend_type)
+    def get_next_major_swing_point(self, timeframe: str, trend_type: str, offset_index: int) -> Optional[Candle]:
+        candles = self.get_candles(timeframe)
+        for i in range(offset_index + 1, len(candles), 1):
+            c = candles[i]
+            if (c.get_major_swing_dir(trend_type) == TrendDir.TOP) or (c.get_major_swing_dir(trend_type) == TrendDir.BOTTOM):
+                return c
+        return None
 
     def find_high_and_low_between_candles(self, timeframe, start, end):
         low = 999999999999999

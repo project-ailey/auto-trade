@@ -1,4 +1,6 @@
 from typing import List
+
+from indicator.trendline_const import TrendDir
 from model.candle import Candle
 
 from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawer
@@ -11,7 +13,7 @@ class TrendLineZigZagAtrIndicator(TrendLineIndicator):
         self.zigzag_atr_multiplier = zigzag_atr_multiplier
 
     @staticmethod
-    def apply_zigzag_with_atr(swing_dir_key_name, swing_price_key_name, atr_multiplier, candles: List[Candle]) -> None:
+    def apply_zigzag_with_atr(trend_type, atr_multiplier, candles: List[Candle]) -> None:
         # Step 1: Find the index of the first candle with a valid ATR
         start_index = -1
         for i, candle in enumerate(candles):
@@ -45,35 +47,35 @@ class TrendLineZigZagAtrIndicator(TrendLineIndicator):
 
             if trend_dir is None:  # Determine initial trend
                 if current_candle.high - last_pivot_price >= threshold:
-                    trend_dir = TrendLineIndicator.UP
+                    trend_dir = TrendDir.UP
                     candidate_pivot_price = current_candle.high
                     candidate_pivot_idx = i
                 elif last_pivot_price - current_candle.low >= threshold:
-                    trend_dir = TrendLineIndicator.DOWN
+                    trend_dir = TrendDir.DOWN
                     candidate_pivot_price = current_candle.low
                     candidate_pivot_idx = i
 
-            elif trend_dir == TrendLineIndicator.UP:  # Uptrend (finding highs)
+            elif trend_dir == TrendDir.UP:  # Uptrend (finding highs)
                 if current_candle.high > candidate_pivot_price:
                     candidate_pivot_price = current_candle.high
                     candidate_pivot_idx = i
                 else:
                     retrace_price = candidate_pivot_price - current_candle.low
                     if retrace_price >= threshold:
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.TOP))
-                        trend_dir = TrendLineIndicator.DOWN
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.TOP))
+                        trend_dir = TrendDir.DOWN
                         candidate_pivot_price = current_candle.low
                         candidate_pivot_idx = i
 
-            elif trend_dir == TrendLineIndicator.DOWN:  # Downtrend (finding lows)
+            elif trend_dir == TrendDir.DOWN:  # Downtrend (finding lows)
                 if current_candle.low < candidate_pivot_price:
                     candidate_pivot_price = current_candle.low
                     candidate_pivot_idx = i
                 else:
                     retrace_price = current_candle.high - candidate_pivot_price
                     if retrace_price >= threshold:
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendLineIndicator.BOTTOM))
-                        trend_dir = TrendLineIndicator.UP
+                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.BOTTOM))
+                        trend_dir = TrendDir.UP
                         candidate_pivot_price = current_candle.high
                         candidate_pivot_idx = i
 
@@ -81,15 +83,16 @@ class TrendLineZigZagAtrIndicator(TrendLineIndicator):
         last_offset = 0
         for idx, price, t_dir in pivots:
             for i in range(last_offset, idx):
-                candles[i].set_indicator(swing_dir_key_name,
-                                           TrendLineIndicator.UP if t_dir == TrendLineIndicator.TOP else TrendLineIndicator.DOWN)
+                candles[i].set_swing_dir(trend_type, TrendDir.UP if t_dir == TrendDir.TOP else TrendDir.DOWN)
             last_offset = idx + 1
 
-            candles[idx].set_indicator(swing_price_key_name, price)
-            candles[idx].set_indicator(swing_dir_key_name, t_dir)
+            candles[idx].set_swing_price(trend_type, price)
+            candles[idx].set_swing_dir(trend_type, t_dir)
 
-    def calculate_swing_lines(self, candles: List[Candle]) -> None:
-        TrendLineZigZagAtrIndicator.apply_zigzag_with_atr('swing_dir_' + self.trend_type, 'swing_price_' + self.trend_type, self.zigzag_atr_multiplier, candles)
+    def calculate_swing_lines(self, symbol, timeframe) -> None:
+        candles: List[Candle] = symbol.get_candles(timeframe)
+
+        TrendLineZigZagAtrIndicator.apply_zigzag_with_atr(self.trend_type, self.zigzag_atr_multiplier, candles)
 
 class TrendLineZigZagAtrIndicatorDrawer(TrendLineIndicatorDrawer):
     def __init__(self, swing_color: str, major_swing_color: str, trend_color: str):

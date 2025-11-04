@@ -10,6 +10,7 @@ def find_most_low(candles, start, end):
 
     return most_low_index
 
+
 def find_most_high(candles, start, end):
     most_high = candles[start].high
     most_high_index = start
@@ -19,11 +20,3 @@ def find_most_high(candles, start, end):
             most_high_index = i
 
     return most_high_index
-
-timeframe_table = ["1m", "3m", "5m", "15m", "1h", "4h", "1d", "1w", "1M"]
-def is_higher_timeframe(left, right) -> bool:
-    return timeframe_table.index(right) > timeframe_table.index(right)
-
-def truncate_decimal(value, digits):
-    multiplier = 10 ** digits
-    return int(value * multiplier) / multiplier

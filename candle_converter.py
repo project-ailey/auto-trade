@@ -7,8 +7,11 @@ class CandleConverter:
     # Convert standardized dictionary data into a list of Candle objects
     def to_candles(self, data: List[Dict[str, any]]) -> List[Candle]:
         candles = []
-        for entry in data:
+        for i in range(len(data)):
+            entry = data[i]
+
             candle = Candle(
+                index=i,
                 timestamp=entry["timestamp"],
                 open_price=float(entry["open"]),
                 close_price=float(entry["close"]),

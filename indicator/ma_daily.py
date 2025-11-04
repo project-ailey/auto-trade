@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 from indicator.indicator import Indicator
 from indicator.ma import MAIndicator
