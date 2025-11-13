@@ -3,9 +3,8 @@ from typing import List
 from matplotlib.axes import Axes
 
 from indicator.indicator import Indicator
-from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
-from model.symbol import Symbol
+
 
 class RSIIndicator(Indicator):
 

@@ -3,7 +3,6 @@ from typing import List
 
 from matplotlib.axes import Axes
 
-from model.candle import Candle
 
 class IndicatorDrawer:
     def __init__(self, name: str, color: str):

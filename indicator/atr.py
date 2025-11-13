@@ -3,9 +3,7 @@ from matplotlib.axes import Axes
 import numpy as np
 
 from indicator.indicator import Indicator
-from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
-from model.symbol import Symbol
 
 # ATR (Average True Range) indicator implementation
 # mode="sma" for simple moving average ATR,

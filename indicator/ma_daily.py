@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List
 from indicator.indicator import Indicator
 from indicator.ma import MAIndicator
-from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
 from matplotlib.axes import Axes
 import numpy as np

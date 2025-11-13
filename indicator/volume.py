@@ -2,9 +2,7 @@ from typing import List
 
 from matplotlib.axes import Axes
 
-from model.candle import Candle
 from indicator.indicator_drawer import IndicatorDrawer
-from model.symbol import Symbol
 
 
 class VolumeIndicatorDrawer(IndicatorDrawer):
