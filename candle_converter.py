@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Dict
 from model.candle import Candle
 
+
 class CandleConverter:
 
     # Convert standardized dictionary data into a list of Candle objects

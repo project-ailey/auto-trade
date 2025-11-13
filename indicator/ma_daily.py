@@ -59,4 +59,3 @@ class MADailyIndicatorDrawer(IndicatorDrawer):
         arr = np.array([v if v is not None else np.nan for v in vals], dtype=float)
         target_plot.plot(indexes, arr, label=self.name.upper(), linewidth=self.linewidth, linestyle='-', color=self.color)
         target_plot.set_ylabel(self.name.upper()); target_plot.set_xlabel('Time'); target_plot.legend(); target_plot.grid(True)
-

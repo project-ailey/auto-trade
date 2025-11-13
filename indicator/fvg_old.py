@@ -171,6 +171,7 @@ class FVGOldIndicatorDrawer(IndicatorDrawer):
                 height = c.get_indicator('fvg')['high'] - c.get_indicator('fvg')['low']
                 rect = Rectangle((start_num, c.get_indicator('fvg')['low']), width, height,
                                  facecolor=c.get_indicator('fvg')['color'], edgecolor=None, alpha=0.3)
+
                 target_plot.add_patch(rect)
 
             elif self.is_draw_ob and c.get_indicator('fvg_ob') != None:
@@ -222,3 +223,4 @@ class FVGOldIndicatorDrawer(IndicatorDrawer):
                 alpha=0.5
             )
             target_plot.add_patch(rect)
+

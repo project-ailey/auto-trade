@@ -48,7 +48,6 @@ class ATRIndicator(Indicator):
 
         for i, candle in enumerate(candles): candle.set_indicator(self.name, atr_values[i])
 
-
 class ATRIndicatorDrawer(IndicatorDrawer):
     def __init__(self) -> None:
         super().__init__(name="atr", color='purple')
