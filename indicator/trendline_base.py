@@ -61,6 +61,8 @@ class TrendLineIndicator(Indicator):
                     next_high = symbol.get_next_swing_high(timeframe, self.trend_type, check_index)
 
                     if next_low == None:
+                        trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
+                        trend_pivots.append((pivots[len(pivots) - 1][0], pivots[len(pivots) - 1][1], pivots[len(pivots) - 1][2]))
                         break   # Reached the end, then break
 
                     if next_low != None and candles[base_start_index].low > next_low.low:
@@ -123,6 +125,8 @@ class TrendLineIndicator(Indicator):
 
                     else:
                         if next_high == None:
+                            trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
+                            trend_pivots.append((pivots[len(pivots) - 1][0], pivots[len(pivots) - 1][1], pivots[len(pivots) - 1][2]))
                             break
                         else:
                             check_index = next_high.index # ENGULFED
@@ -132,6 +136,8 @@ class TrendLineIndicator(Indicator):
                     next_low = symbol.get_next_swing_low(timeframe, self.trend_type, check_index)
 
                     if next_high == None:
+                        trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
+                        trend_pivots.append((pivots[len(pivots)-1][0], pivots[len(pivots)-1][1], pivots[len(pivots)-1][2]))
                         break   # Reached the end, then break
 
                     if next_high != None and candles[base_start_index].high < next_high.high:
@@ -194,6 +200,8 @@ class TrendLineIndicator(Indicator):
 
                     else:
                         if next_low == None:
+                            trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
+                            trend_pivots.append((pivots[len(pivots) - 1][0], pivots[len(pivots) - 1][1], pivots[len(pivots) - 1][2]))
                             break
                         else:
                             check_index = next_low.index # ENGULFED

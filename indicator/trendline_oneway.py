@@ -44,7 +44,7 @@ class TrendLineOnewayIndicator(TrendLineIndicator):
                 if curr_candle.high > base_candle.high:  # if the high is higher than the base candle’s high, switch to uptrend (change base candle)
                     curr_candle.set_swing_dir(self.trend_type, TrendDir.UP)
                     base_candle.set_swing_price(self.trend_type, base_candle.low)
-                    base_candle.set_swing_dir(self.trend_type, TrendDir.BOTTOM) # 저점
+                    base_candle.set_swing_dir(self.trend_type, TrendDir.BOTTOM) # bottom
 
                     base_candle = curr_candle
                 elif curr_candle.low < base_candle.low:  # if the low is lower than the base candle’s low, maintain downtrend (change base candle)
