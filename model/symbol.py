@@ -10,31 +10,39 @@ class Symbol:
         self.ticker = ticker
         self.excd = excd
         self.candle_list: Dict[str, List[Candle]] = {}
-        self.candle_table: Dict[str, Dict[int, tuple[Candle, int]]] = {}
+        self.candle_table: Dict[str, Dict[int, Candle]] = {}
 
     def set_candles(self, timeframe: str, candles: List[Candle]):
         self.candle_list[timeframe] = candles
         self.candle_table[timeframe] = {}
         for i in range(len(candles)):
             c = candles[i]
-            self.candle_table[timeframe][int(c.timestamp.timestamp())] = (c, i)
+            self.candle_table[timeframe][int(c.timestamp.timestamp())] = c
 
     def get_candles(self, timeframe: str) -> Optional[List[Candle]]:
         return self.candle_list.get(timeframe)
 
-    def get_candle(self, timeframe: str, candle_time: datetime) -> Optional[Candle]:
+    def get_candle_by_index(self, timeframe: str, index: int) -> Optional[Candle]:
+        if timeframe in self.candle_list:
+            if index < 0 or index >= len(self.candle_list[timeframe]):
+                return None
+            return self.candle_list[timeframe][index]
+        return None
+
+    def get_candle_by_candle_time(self, timeframe: str, candle_time: datetime) -> Optional[Candle]:
         if timeframe in self.candle_table:
             if int(candle_time.timestamp()) in self.candle_table.get(timeframe):
-                return self.candle_table.get(timeframe).get(int(candle_time.timestamp()))[0]
+                return self.candle_table.get(timeframe).get(int(candle_time.timestamp()))
             else:
                 return None
         else:
             return None
 
+
     def get_candle_index(self, timeframe: str, candle_time: datetime) -> int:
         if timeframe in self.candle_table:
             if int(candle_time.timestamp()) in self.candle_table.get(timeframe):
-                return self.candle_table.get(timeframe).get(int(candle_time.timestamp()))[1]
+                return self.candle_table.get(timeframe).get(int(candle_time.timestamp())).index
             else:
                 return -1
         else:

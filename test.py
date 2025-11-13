@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 from typing import List
 import matplotlib.pyplot as plt
 
+from exchange.crypto_yfinance import CryptoYfinanceExchange
 from indicator.ma_daily import MADailyIndicator, MADailyIndicatorDrawer
 from indicator.pdarray import PDArrayIndicator, PDArrayIndicatorDrawer
 from indicator.trendline_oneway import TrendLineOnewayIndicatorDrawer, TrendLineOnewayIndicator
@@ -20,7 +21,7 @@ from model.symbol import Symbol
 from util import apply_indicators, fetch_candles
 
 
-def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], draw_candles: bool = True, draw_candle_indice: bool = True):
+def plot_candles(exchange, symbol, timeframe: str, indicator_price_drawers: List[IndicatorDrawer], indicator_drawers: List[IndicatorDrawer], draw_candles: bool = True, draw_candle_indice: bool = True):
     candles = symbol.get_candles(timeframe)
 
     indexes = list(range(len(candles)))
@@ -73,7 +74,9 @@ def plot_candles(symbol, timeframe: str, indicator_price_drawers: List[Indicator
         drawer.draw(symbol, timeframe, price_ax, indexes, timestamps, opens, closes, lows, highs, volumes)
 
     price_ax.set_ylabel('Price')
-    price_ax.set_title('Candlestick Chart')
+
+    ticker = f"{symbol.ticker}.{symbol.excd}" if symbol.excd != None else symbol.ticker
+    price_ax.set_title(f'{ticker} ({timeframe}) in {exchange.get_name()}')
 
     # replace x-values based on index with date labels
     new_xticks = list(range(0, len(candles)-1, max(int(len(candles) / 10), 1)))
@@ -109,11 +112,12 @@ if __name__ == "__main__":
 
     days_1d = 500
 
-    timeframe = "1d"
+    timeframe = "1d"    # tf support - m, h, d, w, M
     ticker = "BTC/USDT"
     days = 120
     excd = None
-    exchange = CryptoBinanceExchange()
+    #exchange = CryptoBinanceExchange()
+    exchange = CryptoYfinanceExchange()
 
     indicators = [ATRIndicator(period=14, mode=mode_atr), RSIIndicator(period=14), TrendLineZigZagAtrIndicator(0.9, 2),
                   # TrendLineZigZagIndicator(5), TrendLineOnewayIndicator(),
@@ -145,13 +149,13 @@ if __name__ == "__main__":
     ]
 
     symbol = Symbol(ticker, excd)
-    fetch_candles(symbol, exchange, "1d", datetime.now() - timedelta(days=days_1d))
-    if indicators != None and len(indicators) > 0:
-        apply_indicators(symbol, "1d", indicators)
+    #fetch_candles(symbol, exchange, "1d", datetime.now() - timedelta(days=days_1d))
+    # if indicators != None and len(indicators) > 0:
+    #     apply_indicators(symbol, "1d", indicators)
 
     fetch_candles(symbol, exchange, timeframe, datetime.now()-timedelta(days=days))
     if indicators != None and len(indicators) > 0:
         apply_indicators(symbol, timeframe, indicators)
 
     # Draw chart
-    plot_candles(symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle, draw_candle_indice=is_draw_candle_index)
+    plot_candles(exchange, symbol, timeframe, indicator_price_drawers, indicator_drawers, draw_candles=is_draw_candle, draw_candle_indice=is_draw_candle_index)

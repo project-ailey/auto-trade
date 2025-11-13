@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from exchange.base import BaseExchange
 from typing import List, Dict
 import ccxt
-import time
 
 from exchange.util import timeframe_to_seconds, timeframe_to_minutes
 
@@ -12,6 +11,9 @@ class CryptoBinanceExchange(BaseExchange):
 
     def __init__(self):
         self.api = ccxt.binance()  # Can use public data without API key
+
+    def get_name(self) -> str:
+        return 'Binance'
 
     # Fetch latest candle data from Binance
     def fetch_candles(self, ticker: str, timeframe: str, since: datetime, excd: str = None) -> List[Dict[str, float]]:

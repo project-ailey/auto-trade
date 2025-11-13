@@ -2,10 +2,13 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 import random
 
-from exchange.util import timeframe_to_seconds, find_regular_market_candle_time_before, timeframe_to_minutes
+from exchange.util import find_regular_market_candle_time_before, timeframe_to_minutes
 
 
 class BaseExchange:
+
+    def get_name(self) -> str:
+        return '-'
 
     def get_market_time(self):
         return (0, 0, 0, 0, 0, 0)   # (start_h, start_m, r_start_h, r_start_m, r_end_h, r_end_m)

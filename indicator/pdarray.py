@@ -53,8 +53,8 @@ class PDArrayIndicator(Indicator):
             low = max(candles[offset_index].open, candles[offset_index].close)
             return {"type": "order", "high": high, "low": low, "color": ob_color, "index": offset_index, "dir": price_dir}
 
-        elif (upper_shadow_size if swing_dir == TrendDir.TOP else lower_shadow_size) > candles[offset_index].get_indicator('atr'):
-            # Star shape but with a long wick (indicates a shift in control between forces)
+        elif candles[offset_index].get_indicator('atr') and (upper_shadow_size if swing_dir == TrendDir.TOP else lower_shadow_size) > candles[offset_index].get_indicator('atr'):
+            # Star shape but with a long wick
             if swing_dir == TrendDir.TOP:
                 high = upper_shadow_high
                 low = upper_shadow_low
