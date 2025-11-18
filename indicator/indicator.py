@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 # Abstract base class for indicators
 class Indicator(ABC):
@@ -7,5 +8,5 @@ class Indicator(ABC):
 
     # Calculate indicator and store in candles
     @abstractmethod
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
         pass

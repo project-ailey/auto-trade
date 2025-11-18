@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from indicator.trendline_const import TrendDir
 from model.candle import Candle
@@ -7,91 +7,91 @@ from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawe
 
 
 class TrendLineZigZagAtrIndicator(TrendLineIndicator):
-    def __init__(self, zigzag_atr_multiplier: float = 1.1, trend_atr_multiplier: float = 2):
-        super().__init__(trend_type="zigzag_atr", trend_atr_multiplier=trend_atr_multiplier)
+    def __init__(self, zigzag_atr_multiplier: float = 1.1):
+        super().__init__(trend_type="zigzag_atr")
 
         self.zigzag_atr_multiplier = zigzag_atr_multiplier
 
     @staticmethod
     def apply_zigzag_with_atr(trend_type, atr_multiplier, candles: List[Candle]) -> None:
         # Step 1: Find the index of the first candle with a valid ATR
-        start_index = -1
-        for i, candle in enumerate(candles):
-            if candle.get_indicator('atr') is not None:
-                start_index = i
-                break
-
-        # If there is no valid starting point or insufficient data, exit the function
+        start_index = next(
+            (i for i, c in enumerate(candles) if c.get_indicator('atr') is not None),
+            -1
+        )
         if start_index == -1 or len(candles) < start_index + 2:
             print("lack atrs")
             return
 
         # Step 2: Initialize variables starting from the valid point
-        pivots = []
-        last_pivot_price = candles[start_index].close
+        first = candles[start_index]
+        # Select the more extreme value between high/low as the initial pivot instead of using the close price.
+        last_pivot_price = first.high if first.high - first.close >= first.close - first.low else first.low
         trend_dir = None
 
         candidate_pivot_price = last_pivot_price
         candidate_pivot_idx = start_index
 
-        # Step 3: Main loop starting from the next candle after the valid point
+        pivots: List[Tuple[int, float, TrendDir]] = []
+
+        # Step 3: Main loop
         for i in range(start_index + 1, len(candles)):
-            current_candle = candles[i]
-            atr_at_pivot = candles[candidate_pivot_idx].get_indicator('atr')
+            c = candles[i]
+            atr = c.get_indicator('atr')
+            if atr is None:
+                continue
 
-            # Assume there are no candles without ATR after start_index
-            # But if being defensive, a check could be added
-            if atr_at_pivot is None: continue
+            threshold = atr_multiplier * atr
+            price = c.close
 
-            threshold = atr_multiplier * atr_at_pivot
-
-            if trend_dir is None:  # Determine initial trend
-                if current_candle.high - last_pivot_price >= threshold:
-                    trend_dir = TrendDir.UP
-                    candidate_pivot_price = current_candle.high
+            # Initial trend determination
+            if trend_dir is None:
+                delta = price - last_pivot_price
+                if abs(delta) >= threshold:
+                    trend_dir = TrendDir.UP if delta > 0 else TrendDir.DOWN
+                    candidate_pivot_price = price
                     candidate_pivot_idx = i
-                elif last_pivot_price - current_candle.low >= threshold:
+                continue
+
+            # Update the highest high or check retracement during an uptrend
+            if trend_dir == TrendDir.UP:
+                if c.high > candidate_pivot_price:
+                    candidate_pivot_price = c.high
+                    candidate_pivot_idx = i
+                elif candidate_pivot_price - c.low >= threshold:
+                    pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.TOP))
                     trend_dir = TrendDir.DOWN
-                    candidate_pivot_price = current_candle.low
+                    candidate_pivot_price = c.low
                     candidate_pivot_idx = i
 
-            elif trend_dir == TrendDir.UP:  # Uptrend (finding highs)
-                if current_candle.high > candidate_pivot_price:
-                    candidate_pivot_price = current_candle.high
+            # Update the lowest low or check retracement during a downtrend
+            else:  # TrendDir.DOWN
+                if c.low < candidate_pivot_price:
+                    candidate_pivot_price = c.low
                     candidate_pivot_idx = i
-                else:
-                    retrace_price = candidate_pivot_price - current_candle.low
-                    if retrace_price >= threshold:
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.TOP))
-                        trend_dir = TrendDir.DOWN
-                        candidate_pivot_price = current_candle.low
-                        candidate_pivot_idx = i
-
-            elif trend_dir == TrendDir.DOWN:  # Downtrend (finding lows)
-                if current_candle.low < candidate_pivot_price:
-                    candidate_pivot_price = current_candle.low
+                elif c.high - candidate_pivot_price >= threshold:
+                    pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.BOTTOM))
+                    trend_dir = TrendDir.UP
+                    candidate_pivot_price = c.high
                     candidate_pivot_idx = i
-                else:
-                    retrace_price = current_candle.high - candidate_pivot_price
-                    if retrace_price >= threshold:
-                        pivots.append((candidate_pivot_idx, candidate_pivot_price, TrendDir.BOTTOM))
-                        trend_dir = TrendDir.UP
-                        candidate_pivot_price = current_candle.high
-                        candidate_pivot_idx = i
 
-        # Apply confirmed pivots to candles
+        # Step 4: Confirm the final pivot
+        if trend_dir is not None and candidate_pivot_idx != start_index:
+            final_dir = TrendDir.TOP if trend_dir == TrendDir.UP else TrendDir.BOTTOM
+            pivots.append((candidate_pivot_idx, candidate_pivot_price, final_dir))
+
+        # Step 5: Apply swing information to candles
         last_offset = 0
         for idx, price, t_dir in pivots:
-            for i in range(last_offset, idx):
-                candles[i].set_swing_dir(trend_type, TrendDir.UP if t_dir == TrendDir.TOP else TrendDir.DOWN)
+            fill_dir = TrendDir.UP if t_dir == TrendDir.BOTTOM else TrendDir.DOWN
+            for j in range(last_offset, idx):
+                candles[j].set_swing_dir(trend_type, fill_dir)
             last_offset = idx + 1
 
             candles[idx].set_swing_price(trend_type, price)
             candles[idx].set_swing_dir(trend_type, t_dir)
 
-    def calculate_swing_lines(self, symbol, timeframe) -> None:
-        candles: List[Candle] = symbol.get_candles(timeframe)
-
+    def calculate_swing_lines(self, symbol, timeframe, end_time, candles) -> None:
         TrendLineZigZagAtrIndicator.apply_zigzag_with_atr(self.trend_type, self.zigzag_atr_multiplier, candles)
 
 class TrendLineZigZagAtrIndicatorDrawer(TrendLineIndicatorDrawer):

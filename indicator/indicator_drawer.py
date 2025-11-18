@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from datetime import datetime
 from typing import List
 
 from matplotlib.axes import Axes
@@ -10,5 +11,5 @@ class IndicatorDrawer:
         self.color = color
 
     @abstractmethod
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         pass

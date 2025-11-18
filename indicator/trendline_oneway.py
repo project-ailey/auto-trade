@@ -7,12 +7,10 @@ from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawe
 
 
 class TrendLineOnewayIndicator(TrendLineIndicator):
-    def __init__(self, trend_atr_multiplier: float = 2):
-        super().__init__(trend_type="oneway", trend_atr_multiplier=trend_atr_multiplier)
+    def __init__(self):
+        super().__init__(trend_type="oneway")
 
-    def calculate_swing_lines(self, symbol, timeframe) -> None:
-        candles: List[Candle] = symbol.get_candles(timeframe)
-
+    def calculate_swing_lines(self, symbol, timeframe, end_time, candles) -> None:
         # calculate swing trend
         base_candle = candles[0]
 

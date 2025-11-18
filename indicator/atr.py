@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from matplotlib.axes import Axes
 import numpy as np
@@ -16,9 +17,7 @@ class ATRIndicator(Indicator):
         self.period = period
         self.mode = mode
 
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        candles = symbol.get_candles(timeframe)
-
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
         n = len(candles)
         min_required = self.period if self.mode == "sma" else self.period + 1
         if n < min_required:
@@ -52,9 +51,7 @@ class ATRIndicatorDrawer(IndicatorDrawer):
     def __init__(self) -> None:
         super().__init__(name="atr", color='purple')
 
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
-        candles = symbol.get_candles(timeframe)
-
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         vals = [c.get_indicator(self.name) for c in candles]
         arr = np.array([v if v is not None else np.nan for v in vals], dtype=float)
         target_plot.plot(indexes, arr, label=self.name.upper(), linewidth=1.5, linestyle='-', color=self.color)

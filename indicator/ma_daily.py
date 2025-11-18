@@ -16,9 +16,7 @@ class MADailyIndicator(Indicator):
         self.mode = mode
         if self.mode == "ema": self.k = 2 / (self.period + 1)
 
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        candles = symbol.get_candles(timeframe)
-
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
         if timeframe == "1d":   # Skip if the timeframe is 1d.
             return
 
@@ -28,7 +26,7 @@ class MADailyIndicator(Indicator):
             return
 
         # Pre-calculate the daily moving average.
-        candles_1d = symbol.get_candles("1d")
+        candles_1d = symbol.get_candles("1d", None) # todo. None temporarily. Need fix
         if not candles_1d:
             return
 
@@ -52,9 +50,7 @@ class MADailyIndicatorDrawer(IndicatorDrawer):
         super().__init__(name=f"ma_daily_{period}", color=color)
         self.linewidth = linewidth
 
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
-        candles = symbol.get_candles(timeframe)
-
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         vals = [c.get_indicator(self.name) for c in candles]
         arr = np.array([v if v is not None else np.nan for v in vals], dtype=float)
         target_plot.plot(indexes, arr, label=self.name.upper(), linewidth=self.linewidth, linestyle='-', color=self.color)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from matplotlib.axes import Axes
@@ -10,55 +11,58 @@ from indicator.indicator_drawer import IndicatorDrawer
 
 
 class TrendLineIndicator(Indicator):
-    def __init__(self, trend_type: str, trend_atr_multiplier: float):
+    def __init__(self, trend_type: str):
         super().__init__(name="trendline_" + trend_type)
         self.trend_type = trend_type
-        self.trendline_atr_multiplier = trend_atr_multiplier
 
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        self.calculate_swing_lines(symbol, timeframe)
-        self.calculate_major_swing_lines(symbol, timeframe)
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
+        # The trendline class does not consider main_trend_type. It is only used when computing pdarray.
+        
+        self.calculate_swing_lines(symbol, timeframe, end_time, candles)
+        self.calculate_major_swing_lines(symbol, timeframe, end_time, candles)
 
-    def calculate_swing_lines(self, symbol, timeframe) -> None:
+    def calculate_swing_lines(self, symbol, timeframe, end_time: datetime, candles) -> None:
         # Defined in the subclass; major swing lines are handled based on this result.
         pass
 
-    def calculate_major_swing_lines(self, symbol, timeframe) -> None:
-        candles: List[Candle] = symbol.get_candles(timeframe)
-
-        next_swing_point = symbol.get_next_swing_point(timeframe, self.trend_type, 0)
+    def calculate_major_swing_lines(self, symbol, timeframe, end_time: datetime, candles) -> None:
+        next_swing_point = symbol.get_next_swing_point(timeframe, end_time, self.trend_type, 0)
 
         pivots = []
         trend_pivots = []
 
         if next_swing_point != None:
+            curr_trend = TrendDir.NONE
+
             if next_swing_point.get_swing_dir(self.trend_type) == TrendDir.TOP:
                 base_start_index = next_swing_point.index
 
-                next_swing_low = symbol.get_next_swing_low(timeframe, self.trend_type, next_swing_point.index)
-                base_end_index = next_swing_low.index
-                check_index = base_end_index
-                curr_trend = TrendDir.DOWN
+                next_swing_low = symbol.get_next_swing_low(timeframe, end_time, self.trend_type, next_swing_point.index)
+                if next_swing_low != None:
+                    base_end_index = next_swing_low.index
+                    check_index = base_end_index
+                    curr_trend = TrendDir.DOWN
 
-                pivots.append((base_start_index, candles[base_start_index].high, TrendDir.TOP))
-                pivots.append((base_end_index, candles[base_end_index].low, TrendDir.BOTTOM))
+                    pivots.append((base_start_index, candles[base_start_index].high, TrendDir.TOP))
+                    pivots.append((base_end_index, candles[base_end_index].low, TrendDir.BOTTOM))
 
             else:
                 base_start_index = next_swing_point.index
 
-                next_swing_high = symbol.get_next_swing_high(timeframe, self.trend_type, next_swing_point.index)
-                base_end_index = next_swing_high.index
-                check_index = base_end_index
-                curr_trend = TrendDir.UP
+                next_swing_high = symbol.get_next_swing_high(timeframe, end_time, self.trend_type, next_swing_point.index)
+                if next_swing_high != None:
+                    base_end_index = next_swing_high.index
+                    check_index = base_end_index
+                    curr_trend = TrendDir.UP
 
-                pivots.append((base_start_index, candles[base_start_index].low, TrendDir.BOTTOM))
-                pivots.append((base_end_index, candles[base_end_index].low, TrendDir.TOP))
+                    pivots.append((base_start_index, candles[base_start_index].low, TrendDir.BOTTOM))
+                    pivots.append((base_end_index, candles[base_end_index].low, TrendDir.TOP))
 
             last_found_choch_index = -1
-            while True:
+            while curr_trend != TrendDir.NONE:
                 if curr_trend == TrendDir.UP:
-                    next_low = symbol.get_next_swing_low(timeframe, self.trend_type, check_index)
-                    next_high = symbol.get_next_swing_high(timeframe, self.trend_type, check_index)
+                    next_low = symbol.get_next_swing_low(timeframe, end_time, self.trend_type, check_index)
+                    next_high = symbol.get_next_swing_high(timeframe, end_time, self.trend_type, check_index)
 
                     if next_low == None:
                         trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
@@ -132,8 +136,8 @@ class TrendLineIndicator(Indicator):
                             check_index = next_high.index # ENGULFED
 
                 elif curr_trend == TrendDir.DOWN:
-                    next_high = symbol.get_next_swing_high(timeframe, self.trend_type, check_index)
-                    next_low = symbol.get_next_swing_low(timeframe, self.trend_type, check_index)
+                    next_high = symbol.get_next_swing_high(timeframe, end_time, self.trend_type, check_index)
+                    next_low = symbol.get_next_swing_low(timeframe, end_time, self.trend_type, check_index)
 
                     if next_high == None:
                         trend_pivots.insert(0, (pivots[0][0], pivots[0][1], pivots[0][2]))
@@ -314,9 +318,7 @@ class TrendLineIndicatorDrawer(IndicatorDrawer):
 
             target_plot.plot(x_vals, y_vals, color='black', linewidth=1.5)
 
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
-        candles = symbol.get_candles(timeframe)
-
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         self.draw_swing(target_plot, indexes, candles)
         self.draw_major_swing(target_plot, indexes, candles)
         self.draw_trend(target_plot, indexes, candles)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from matplotlib.axes import Axes
@@ -12,15 +13,11 @@ class RSIIndicator(Indicator):
         super().__init__(name="rsi")
         self.period = period
 
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        candles = symbol.get_candles(timeframe)
-
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
         if len(candles) < self.period:
             for candle in candles:
                 candle.set_indicator(self.name, None)
             return
-
-        closes = [c.close for c in candles]
 
         # Calculate upward movement (U) and downward movement (D)
         gains = [0.0] * len(closes)
@@ -47,9 +44,7 @@ class RSIIndicatorDrawer(IndicatorDrawer):
     def __init__(self):
         super().__init__(name=f"rsi", color='black')
 
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
-        candles = symbol.get_candles(timeframe)
-
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         rsis = [c.get_indicator("rsi") for c in candles]
 
         # RSI plot (lower panel)

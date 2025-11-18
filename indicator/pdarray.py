@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
@@ -7,15 +8,15 @@ from indicator.indicator_drawer import IndicatorDrawer
 
 
 class PDArrayIndicator(Indicator):
-    def __init__(self, trend_type: str, atr_multiplier: float = 1.0, ob_limit_on_trendline: int = 3) -> None:
+    def __init__(self, trend_type: str, fvg_atr_multiplier: float = 1.0) -> None:
         super().__init__(name="fvg")
 
         self.trend_type = trend_type
-        self.atr_multiplier = atr_multiplier
-        self.ob_limit_on_trendline = ob_limit_on_trendline
+        self.fvg_atr_multiplier = fvg_atr_multiplier
 
-    def find_order_block(self, symbol, timeframe: str, offset_index: int, override_swing_dir: int = TrendDir.NONE, can_find_if_not_found: bool = False, find_dir: int = 0):
-        candles = symbol.get_candles(timeframe)
+    def find_order_block(self, candles, offset_index: int, override_swing_dir: int = TrendDir.NONE, can_find_if_not_found: bool = False, find_dir: int = 0):
+        if offset_index < 0 or offset_index >= len(candles):
+            return None
 
         swing_dir = candles[offset_index].get_major_swing_dir(self.trend_type) if override_swing_dir == TrendDir.NONE else override_swing_dir   # for recursive
         price_dir = TrendDir.DOWN if swing_dir == TrendDir.TOP else TrendDir.UP
@@ -75,8 +76,8 @@ class PDArrayIndicator(Indicator):
             # If there is no order block at the swing point, look before and after
             if can_find_if_not_found:
                 if find_dir == 0:
-                    post_dir_ob = self.find_order_block(symbol, timeframe, offset_index + 1, swing_dir, can_find_if_not_found, 1) # post has higher priority
-                    prev_dir_ob = self.find_order_block(symbol, timeframe, offset_index - 1, swing_dir, can_find_if_not_found, -1)  # If there's no post, check prev
+                    post_dir_ob = self.find_order_block(candles, offset_index + 1, swing_dir, can_find_if_not_found, 1) # post has higher priority
+                    prev_dir_ob = self.find_order_block(candles, offset_index - 1, swing_dir, can_find_if_not_found, -1)  # If there's no post, check prev
 
                     if post_dir_ob != None and prev_dir_ob == None:
                         return post_dir_ob
@@ -97,16 +98,14 @@ class PDArrayIndicator(Indicator):
                             return None
 
                 elif find_dir == 1:
-                    return self.find_order_block(symbol, timeframe, offset_index + 1, swing_dir, can_find_if_not_found, 1)
+                    return self.find_order_block(candles, offset_index + 1, swing_dir, can_find_if_not_found, 1)
 
                 elif find_dir == -1:
-                    return self.find_order_block(symbol, timeframe, offset_index - 1, swing_dir, can_find_if_not_found, -1)
+                    return self.find_order_block(candles, offset_index - 1, swing_dir, can_find_if_not_found, -1)
             else:
                 return None
 
-    def find_fvg_blocks(self, symbol, timeframe: str, base_swing_index: int):
-        candles = symbol.get_candles(timeframe)
-
+    def find_fvg_blocks(self, candles, base_swing_index: int):
         base_swing_dir = candles[base_swing_index].get_major_swing_dir(self.trend_type)
 
         result = []
@@ -117,40 +116,43 @@ class PDArrayIndicator(Indicator):
             if prev.index != base_swing_index and candles[prev.index].has_major_swing_point(self.trend_type):
                 break
 
+            atr_val = candles[center_idx].get_indicator('atr') or 0
             if base_swing_dir == TrendDir.BOTTOM and post.low > prev.high and center.is_bullish():    # Uptrend
-                result.append({"type": "fvg", "high": post.low, "low": prev.high, "color": 'teal', "index": center_idx, "dir": TrendDir.UP})
+                if (post.low - prev.high) >= atr_val * self.fvg_atr_multiplier:  # Filter only significant gaps
+                    result.append({"type": "fvg", "high": post.low, "low": prev.high, "color": 'teal', "index": center_idx, "dir": TrendDir.UP})
 
             elif base_swing_dir == TrendDir.TOP and post.high < prev.low and center.is_bearish():  # Downtrend
-                result.append({"type": "fvg", "high": prev.low, "low": post.high, "color": 'tomato', "index": center_idx, "dir": TrendDir.DOWN})
+                if (prev.low - post.high) >= atr_val * self.fvg_atr_multiplier:  # Filter only significant gaps
+                    result.append({"type": "fvg", "high": prev.low, "low": post.high, "color": 'tomato', "index": center_idx, "dir": TrendDir.DOWN})
 
         return result
 
 
-    def find_pdarray_blocks(self, symbol, timeframe: str):
+    def find_pdarray_blocks(self, symbol, timeframe: str, end_time, candles):
         base_swing_index = 0
 
         result = []
         while True:
-            next_swing_point = symbol.get_next_major_swing_point(timeframe, self.trend_type, base_swing_index)
+            next_swing_point = symbol.get_next_major_swing_point(timeframe, end_time, self.trend_type, base_swing_index)
             if next_swing_point == None:
                 break
 
             base_swing_index = next_swing_point.index
 
-            order_block = self.find_order_block(symbol, timeframe, base_swing_index, TrendDir.NONE, True, 0)
+            order_block = self.find_order_block(candles, base_swing_index, TrendDir.NONE, True, 0)
             if order_block != None:
                 if base_swing_index == order_block["index"]:
                     high = order_block["high"]
                     low = order_block["low"]
                     swing_dir = TrendDir.TOP if order_block["dir"] == TrendDir.DOWN else TrendDir.BOTTOM
 
-                    next_ob = self.find_order_block(symbol, timeframe, base_swing_index + 1, swing_dir, False, 0)
+                    next_ob = self.find_order_block(candles, base_swing_index + 1, swing_dir, False, 0)
                     if next_ob != None and high > next_ob['high'] and low < next_ob['low']: # If the next order block is contained within the structure, replace it with that
                         order_block = next_ob
 
 
                 # Find the fair value gap
-                fvgs = self.find_fvg_blocks(symbol, timeframe, base_swing_index)
+                fvgs = self.find_fvg_blocks(candles, base_swing_index)
                 if len(fvgs) > 0:   # Add an order block only if at least one FVG exists
                     order_block["base_swing_index"] = base_swing_index
                     result.append(order_block)
@@ -161,10 +163,8 @@ class PDArrayIndicator(Indicator):
 
         return result
 
-    def calculate(self, symbol, timeframe: str, timestamps, opens, closes, lows, highs, volumes) -> None:
-        candles = symbol.get_candles(timeframe)
-
-        raws = self.find_pdarray_blocks(symbol, timeframe)
+    def calculate(self, symbol, timeframe: str, end_time: datetime, candles, timestamps, opens, closes, lows, highs, volumes) -> None:
+        raws = self.find_pdarray_blocks(symbol, timeframe, end_time, candles)
         for ob in raws:
             ob_type = ob["type"]
             ob_idx = ob["index"]
@@ -179,6 +179,8 @@ class PDArrayIndicator(Indicator):
                 c = candles[i]
 
                 if i <= ob_base_swing_idx:    # If the candle before the inflection point is defined as an order block, check the direction after the inflection point
+                    continue
+                if c.get_major_swing_dir(self.trend_type) == None:
                     continue
                 if ob_dir == TrendDir.UP and (c.get_major_swing_dir(self.trend_type) == TrendDir.UP or c.get_major_swing_dir(self.trend_type) == TrendDir.TOP):
                     continue
@@ -207,9 +209,7 @@ class PDArrayIndicatorDrawer(IndicatorDrawer):
         self.is_draw_fvg = is_draw_fvg
         self.is_draw_ob = is_draw_ob
 
-    def draw(self, symbol, timeframe: str, target_plot: Axes, indexes: List[int], timestamps, opens, closes, lows, highs, volumes):
-        candles = symbol.get_candles(timeframe)
-
+    def draw(self, symbol, timeframe: str, end_time: datetime, target_plot: Axes, indexes: List[int], candles, timestamps, opens, closes, lows, highs, volumes):
         last_time = indexes[-1]
 
         for i in range(len(candles)):

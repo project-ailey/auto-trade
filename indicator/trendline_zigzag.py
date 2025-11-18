@@ -7,14 +7,12 @@ from indicator.trendline_base import TrendLineIndicator, TrendLineIndicatorDrawe
 
 
 class TrendLineZigZagIndicator(TrendLineIndicator):
-    def __init__(self, zigzag_deviation_percent: float = 5.0, trend_atr_multiplier: float = 2):
-        super().__init__(trend_type="zigzag", trend_atr_multiplier=trend_atr_multiplier)
+    def __init__(self, zigzag_deviation_percent: float = 5.0):
+        super().__init__(trend_type="zigzag")
 
         self.zigzag_deviation_percent = zigzag_deviation_percent
 
-    def calculate_swing_lines(self, symbol, timeframe) -> None:
-        candles: List[Candle] = symbol.get_candles(timeframe)
-
+    def calculate_swing_lines(self, symbol, timeframe, end_time, candles) -> None:
         if len(candles) < 2:
             return
 
